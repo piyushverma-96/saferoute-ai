@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", "DM Sans", sans-serif;
+  
+  --color-brand-bg: #0b0f1a;
+  --color-brand-surface: #0f1724;
+  --color-brand-card: #1a2332;
+  --color-brand-border: #1e293b;
+  
+  --color-brand-purple: #7c3aed;
+  --color-brand-pink: #ec4899;
+  
+  --color-brand-safe: #10b981;
+  --color-brand-warning: #f59e0b;
+  --color-brand-danger: #ef4444;
+  --color-brand-info: #60a5fa;
+  
+  --color-brand-text-primary: #f1f5f9;
+  --color-brand-text-secondary: #94a3b8;
+  --color-brand-text-muted: #64748b;
+}
+
+@layer base {
+  body {
+    @apply bg-brand-bg text-brand-text-primary font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-purple to-brand-pink;
+  }
+  .bg-gradient-brand {
+    @apply bg-gradient-to-br from-brand-purple to-brand-pink text-white;
+  }
+  .border-glow {
+    @apply border-brand-purple shadow-[0_0_15px_rgba(124,58,237,0.5)];
+  }
+  .label-text {
+    @apply uppercase tracking-[0.08em] text-[10px] md:text-[11px] font-medium text-brand-text-secondary;
+  }
+  .card-container {
+    @apply bg-brand-card border border-brand-border rounded-[10px] transition-all duration-200;
+  }
+  .card-hover:hover {
+    @apply border-brand-purple/50 bg-brand-surface shadow-lg transform -translate-y-0.5;
+  }
+  
+  /* SOS Pulsing Animation */
+  .pulse-ring {
+    animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+/* Map specific styles to override leaflet */
+.leaflet-container {
+  font-family: var(--font-sans);
+  background-color: var(--color-brand-bg) !important;
+}
+.leaflet-control-zoom a {
+  background-color: var(--color-brand-surface) !important;
+  color: var(--color-brand-text-primary) !important;
+  border-color: var(--color-brand-border) !important;
+}
+.leaflet-control-zoom a:hover {
+  background-color: var(--color-brand-card) !important;
+}
