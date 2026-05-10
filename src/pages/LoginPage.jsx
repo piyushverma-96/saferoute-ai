@@ -181,28 +181,13 @@ export default function LoginPage() {
               </button>
             </form>
 
-            <div className="my-6 flex items-center justify-center space-x-4">
-              <div className="flex-1 border-t border-brand-border"></div>
-              <span className="text-xs text-brand-text-muted">OR</span>
-              <div className="flex-1 border-t border-brand-border"></div>
-            </div>
-
-            <button 
-              type="button"
-              onClick={handleDemoLogin}
-              className="w-full py-3 border border-dashed border-brand-border hover:border-brand-purple bg-transparent text-brand-text-primary rounded-xl transition-all flex justify-center items-center gap-2 mb-6"
-            >
-              🎯 Try Demo — No signup needed
-            </button>
-            
-            <div className="flex flex-col gap-3">
-              <button disabled className="w-full py-2.5 bg-[#1A1A24] text-[#A0A0B0] rounded-xl flex items-center justify-center gap-2 opacity-60 cursor-not-allowed group relative">
-                <span className="font-bold">G</span> Continue with Google
-                <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-brand-surface border border-brand-border text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Coming Soon</span>
-              </button>
-              <button disabled className="w-full py-2.5 bg-[#1A1A24] text-[#A0A0B0] rounded-xl flex items-center justify-center gap-2 opacity-60 cursor-not-allowed group relative">
-                📱 Continue with Phone
-                <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-brand-surface border border-brand-border text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Coming Soon</span>
+            <div className="mt-4">
+              <button 
+                type="button"
+                onClick={handleDemoLogin}
+                className="w-full py-3 border border-dashed border-brand-border hover:border-brand-purple bg-transparent text-brand-text-primary rounded-xl transition-all flex justify-center items-center gap-2 mb-2"
+              >
+                🎯 Try Demo — No signup needed
               </button>
             </div>
 

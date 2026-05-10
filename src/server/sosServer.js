@@ -1,95 +1,95 @@
-import { WebSocketServer } from 'ws';
+const WebSocket = require('ws')
+const wss = new WebSocket.Server({ port: 8080 })
 
-const wss = new WebSocketServer({ port: 8080 });
-console.log('SOS WebSocket Server running on ws://localhost:8080');
-
-// Map of tracking sessions: userId -> { lat, lng, name, lastUpdated }
-const activeTrackingSessions = new Map();
+// Store all connected clients
+const clients = new Map()
+// Store latest location per userId
+const locations = new Map()
 
 wss.on('connection', (ws) => {
-  console.log('New client connected');
-
+  console.log('New client connected')
+  let clientUserId = null
+  
   ws.on('message', (message) => {
     try {
-      const data = JSON.parse(message);
+      const data = JSON.parse(message)
+      console.log('Received:', data)
       
-      switch (data.type) {
-        case 'START_SOS':
-          console.log(`SOS Started for user: ${data.userId}`);
-          activeTrackingSessions.set(data.userId, {
-            lat: data.lat,
-            lng: data.lng,
-            name: data.name || 'Anonymous',
-            pin: data.pin || '1234', // Store the PIN
-            lastUpdated: Date.now()
-          });
-          broadcastToAll(data);
-          break;
-
-        case 'UPDATE_LOCATION':
-          if (activeTrackingSessions.has(data.userId)) {
-            const session = activeTrackingSessions.get(data.userId);
-            session.lat = data.lat;
-            session.lng = data.lng;
-            session.lastUpdated = Date.now();
-            broadcastToAll(data);
-          }
-          break;
-
-        case 'STOP_SOS':
-          console.log(`SOS Stopped for user: ${data.userId}`);
-          activeTrackingSessions.delete(data.userId);
-          broadcastToAll(data);
-          break;
-
-        case 'VALIDATE_PIN':
-          if (activeTrackingSessions.has(data.userId)) {
-            const session = activeTrackingSessions.get(data.userId);
-            const isValid = session.pin === data.pin;
-            ws.send(JSON.stringify({
-              type: 'PIN_VALIDATION_RESULT',
-              userId: data.userId,
-              isValid: isValid
-            }));
-          } else {
-            ws.send(JSON.stringify({
-              type: 'PIN_VALIDATION_RESULT',
-              userId: data.userId,
-              isValid: false,
-              error: 'Session not found'
-            }));
-          }
-          break;
-          
-        case 'GET_LOCATION':
-          // A tracking client is requesting current location
-          if (activeTrackingSessions.has(data.userId)) {
-            const session = activeTrackingSessions.get(data.userId);
-            ws.send(JSON.stringify({
-              type: 'UPDATE_LOCATION',
-              userId: data.userId,
-              lat: session.lat,
-              lng: session.lng,
-              name: session.name
-            }));
-          }
-          break;
+      if (data.type === 'START_SOS') {
+        clientUserId = data.userId
+        clients.set(data.userId + '_sender', ws)
+        locations.set(data.userId, {
+          lat: data.lat,
+          lng: data.lng
+        })
+        console.log('SOS started for:', data.userId)
       }
-    } catch (error) {
-      console.error('Error parsing message:', error);
+      
+      if (data.type === 'UPDATE_LOCATION') {
+        // Store latest location
+        locations.set(data.userId, {
+          lat: data.lat,
+          lng: data.lng
+        })
+        
+        // Broadcast to ALL watchers of this userId
+        const watcherKey = data.userId + '_watcher'
+        wss.clients.forEach((client) => {
+          if (client.readyState === 
+              WebSocket.OPEN) {
+            client.send(JSON.stringify({
+              type: 'LOCATION_UPDATE',
+              userId: data.userId,
+              lat: data.lat,
+              lng: data.lng,
+              timestamp: Date.now()
+            }))
+          }
+        })
+      }
+      
+      if (data.type === 'SUBSCRIBE') {
+        // Watcher subscribing to a userId
+        clientUserId = data.userId + '_watcher'
+        clients.set(clientUserId, ws)
+        console.log('Watcher subscribed to:', 
+          data.userId)
+        
+        // Send last known location immediately
+        const lastLocation = 
+          locations.get(data.userId)
+        if (lastLocation) {
+          ws.send(JSON.stringify({
+            type: 'LOCATION_UPDATE',
+            userId: data.userId,
+            lat: lastLocation.lat,
+            lng: lastLocation.lng,
+            timestamp: Date.now()
+          }))
+        }
+      }
+      
+      if (data.type === 'STOP_SOS') {
+        locations.delete(data.userId)
+        wss.clients.forEach((client) => {
+          if (client.readyState === 
+              WebSocket.OPEN) {
+            client.send(JSON.stringify({
+              type: 'SOS_STOPPED',
+              userId: data.userId
+            }))
+          }
+        })
+      }
+      
+    } catch(e) {
+      console.error('Parse error:', e)
     }
-  });
-
+  })
+  
   ws.on('close', () => {
-    console.log('Client disconnected');
-  });
-});
+    console.log('Client disconnected')
+  })
+})
 
-function broadcastToAll(messageObj) {
-  const msgString = JSON.stringify(messageObj);
-  wss.clients.forEach((client) => {
-    if (client.readyState === 1) { // OPEN
-      client.send(msgString);
-    }
-  });
-}
+console.log('WebSocket server running on port 8080')

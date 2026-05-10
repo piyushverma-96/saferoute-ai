@@ -10,41 +10,24 @@ export default defineConfig({
     react(), 
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate', // Update prompt behavior as requested
-      includeAssets: [
-        'favicon.ico', 
-        'apple-touch-icon.png', 
-        'masked-icon.svg'
-      ],
-      manifest: {
-        name: 'SafeRoute AI',
-        short_name: 'SafeRoute',
-        description: 'Intelligent safe navigation for women and vulnerable groups',
-        theme_color: '#0A0A0F',
-        background_color: '#0A0A0F',
-        display: 'standalone',
-        orientation: 'portrait',
-        scope: '/',
-        start_url: '/',
-        icons: [
-          {
-            src: 'pwa-icon.svg',
-            sizes: '192x192 512x512',
-            type: 'image/svg+xml',
-            purpose: 'any maskable'
-          }
-        ]
+      registerType: 'autoUpdate',
+      devOptions: {
+        enabled: false
       },
       workbox: {
         globPatterns: [
-          '**/*.{js,css,html,ico,png,svg,woff2}'
+          '**/*.{js,css,html,ico,png,svg}'
         ],
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/tile\.openstreetmap\.org\/.*/i,
+            // Map tiles - cache first
+            urlPattern: /^https:\/\/.*cartocdn\.com\/.*/i,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'osm-tiles-cache',
+              cacheName: 'map-tiles',
               expiration: {
                 maxEntries: 500,
                 maxAgeSeconds: 60 * 60 * 24 * 30
@@ -55,6 +38,7 @@ export default defineConfig({
             }
           },
           {
+            // Nominatim geocoding
             urlPattern: /^https:\/\/nominatim\.openstreetmap\.org\/.*/i,
             handler: 'NetworkFirst',
             options: {
@@ -63,10 +47,14 @@ export default defineConfig({
                 maxEntries: 100,
                 maxAgeSeconds: 60 * 60 * 24 * 7
               },
-              networkTimeoutSeconds: 5
+              networkTimeoutSeconds: 5,
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
             }
           },
           {
+            // OSRM routing
             urlPattern: /^https:\/\/router\.project-osrm\.org\/.*/i,
             handler: 'NetworkFirst',
             options: {
@@ -75,8 +63,28 @@ export default defineConfig({
                 maxEntries: 50,
                 maxAgeSeconds: 60 * 60 * 24
               },
-              networkTimeoutSeconds: 5
+              networkTimeoutSeconds: 5,
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
             }
+          }
+        ]
+      },
+      manifest: {
+        name: 'SafeRoute AI',
+        short_name: 'SafeRoute',
+        description: 'Intelligent safe navigation for women and vulnerable groups',
+        theme_color: '#0b0f1a',
+        background_color: '#0b0f1a',
+        display: 'standalone',
+        orientation: 'portrait',
+        start_url: '/',
+        icons: [
+          {
+            src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%237c3aed"/><text y=".9em" font-size="90">🛡</text></svg>',
+            sizes: 'any',
+            type: 'image/svg+xml'
           }
         ]
       }

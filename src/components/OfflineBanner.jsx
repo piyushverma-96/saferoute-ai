@@ -1,40 +1,73 @@
-import React from 'react';
-import { useEffect, useState } from 'react';
-import { WifiOff, CheckCircle } from 'lucide-react';
-import { useOfflineStatus } from '../hooks/useOfflineStatus';
+import { useState, useEffect } from 'react'
 
-export default function OfflineBanner() {
-  const { isOffline, wasOffline, resetWasOffline } = useOfflineStatus();
-  const [showOnlineToast, setShowOnlineToast] = useState(false);
+const OfflineBanner = () => {
+  const [isOnline, setIsOnline] = useState(
+    navigator.onLine
+  )
+  const [showOnline, setShowOnline] = 
+    useState(false)
 
   useEffect(() => {
-    if (!isOffline && wasOffline) {
-      setShowOnlineToast(true);
-      const timer = setTimeout(() => {
-        setShowOnlineToast(false);
-        resetWasOffline();
-      }, 3000);
-      return () => clearTimeout(timer);
+    const goOffline = () => {
+      setIsOnline(false)
+      setShowOnline(false)
     }
-  }, [isOffline, wasOffline, resetWasOffline]);
+    
+    const goOnline = () => {
+      setIsOnline(true)
+      setShowOnline(true)
+      // Hide "back online" after 3 seconds
+      setTimeout(() => setShowOnline(false), 3000)
+    }
 
-  if (isOffline) {
-    return (
-      <div className="bg-brand-danger text-white px-4 py-2 text-sm flex items-center justify-center gap-2 z-[100] relative shadow-md">
-        <WifiOff size={16} className="animate-pulse" />
-        <span className="font-semibold">No internet connection — Running in offline mode. Cached routes and map tiles available.</span>
-      </div>
-    );
-  }
+    window.addEventListener('offline', goOffline)
+    window.addEventListener('online', goOnline)
+    
+    return () => {
+      window.removeEventListener('offline', goOffline)
+      window.removeEventListener('online', goOnline)
+    }
+  }, [])
 
-  if (showOnlineToast) {
-    return (
-      <div className="bg-brand-safe text-white px-4 py-2 text-sm flex items-center justify-center gap-2 z-[100] relative shadow-md animate-in slide-in-from-top fade-in duration-300">
-        <CheckCircle size={16} />
-        <span className="font-semibold">Back online — Live data restored</span>
-      </div>
-    );
-  }
+  if (isOnline && !showOnline) return null
 
-  return null;
+  return (
+    <div style={{
+      position: 'fixed',
+      top: '52px',
+      left: 0,
+      right: 0,
+      zIndex: 9999,
+      padding: '10px 16px',
+      background: isOnline 
+        ? '#064e3b' 
+        : '#7f1d1d',
+      borderBottom: `1px solid ${
+        isOnline ? '#10b981' : '#ef4444'
+      }`,
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      fontSize: '13px',
+      color: 'white',
+      transition: 'all 0.3s'
+    }}>
+      {isOnline ? (
+        <>
+          <span>✅</span>
+          <span>Back online — 
+            Live data restored</span>
+        </>
+      ) : (
+        <>
+          <span>📡</span>
+          <span>No internet — 
+            Running in offline mode. 
+            Cached routes available.</span>
+        </>
+      )}
+    </div>
+  )
 }
+
+export default OfflineBanner

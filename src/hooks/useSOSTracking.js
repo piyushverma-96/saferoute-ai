@@ -37,15 +37,27 @@ export function useSOSTracking(userId) {
     setTrackingPin(pin);
     setIsTracking(true);
 
+    // Save PIN and ID to localStorage
+    localStorage.setItem(`sos_pin_${userId}`, pin);
+    localStorage.setItem('sos_active_userId', userId);
+    
+    console.log('=== SOS ACTIVATED ===');
+    console.log('userId:', userId);
+    console.log('PIN:', pin);
+    console.log('Tracking URL:', `${window.location.origin}/track/${userId}`);
+    console.log('PIN saved in localStorage as:', `sos_pin_${userId}`);
+
     const handleLocationUpdate = (lat, lng) => {
       setCurrentLocation({ lat, lng });
       if (ws.current && ws.current.readyState === WebSocket.OPEN) {
         ws.current.send(JSON.stringify({
           type: 'UPDATE_LOCATION',
-          userId,
-          lat,
-          lng
+          userId: userId,
+          lat: lat,
+          lng: lng,
+          timestamp: Date.now()
         }));
+        console.log('Location sent:', lat, lng, 'for userId:', userId);
       }
     };
 
@@ -76,8 +88,8 @@ export function useSOSTracking(userId) {
           // Watch position
           watchId.current = navigator.geolocation.watchPosition(
             (pos) => handleLocationUpdate(pos.coords.latitude, pos.coords.longitude),
-            (err) => console.error(err),
-            { enableHighAccuracy: true, maximumAge: 0 }
+            (err) => console.error('GPS error:', err),
+            { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
           );
         },
         (error) => {

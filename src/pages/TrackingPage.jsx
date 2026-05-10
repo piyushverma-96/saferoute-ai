@@ -87,7 +87,16 @@ export default function TrackingPage() {
   };
 
   const validatePin = (enteredPin) => {
-    const validPin = localStorage.getItem(`sos_pin_${userId}`) || '1234'; // Fallback
+    const savedPin = localStorage.getItem(`sos_pin_${userId}`);
+    
+    console.log('=== TRACKING PAGE ===');
+    console.log('userId from URL:', userId);
+    console.log('PIN in localStorage:', savedPin);
+    console.log('Entered PIN:', enteredPin);
+    console.log('Saved PIN:', savedPin);
+
+    const validPin = savedPin || '1234'; // Fallback
+    
     if (enteredPin === validPin) {
       setIsUnlocked(true);
     } else {
@@ -136,15 +145,20 @@ export default function TrackingPage() {
       wsRef.current = ws;
       
       ws.onopen = () => {
+        console.log('Tracker connected to WS');
         setWsConnected(true);
         setIsDemoMode(false);
         ws.send(JSON.stringify({ type: 'SUBSCRIBE', userId: userId }));
+        console.log('Subscribed to:', userId);
       };
       
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          console.log('Tracker received:', data);
+          
           if (data.type === 'LOCATION_UPDATE' && data.userId === userId) {
+            console.log('Location update:', data.lat, data.lng);
             setLocation({ lat: data.lat, lng: data.lng });
             setLastUpdated(Date.now());
             setSignalLost(false);
@@ -152,18 +166,23 @@ export default function TrackingPage() {
           if (data.type === 'SOS_STOPPED' && data.userId === userId) {
             setSignalLost(true);
           }
-        } catch (err) {}
+        } catch (err) {
+          console.error('Parse error:', err);
+        }
       };
       
       ws.onerror = () => {
+        console.log('WS error, starting demo mode');
         demoCleanup = startDemoMode();
       };
       
       ws.onclose = () => {
+        console.log('WS closed, starting demo mode');
         setWsConnected(false);
         demoCleanup = startDemoMode();
       };
     } catch(e) {
+      console.log('WS failed:', e);
       demoCleanup = startDemoMode();
     }
     

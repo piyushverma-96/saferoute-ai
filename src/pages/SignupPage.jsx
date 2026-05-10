@@ -121,6 +121,18 @@ export default function SignupPage() {
       setLoading(false); return;
     }
 
+    if (!formData.emergencyName) {
+      setError("Emergency contact name is required");
+      triggerShake();
+      setLoading(false); return;
+    }
+
+    if (!phoneRegex.test(formData.emergencyPhone)) {
+      setError("Please enter valid Indian mobile number for emergency contact");
+      triggerShake();
+      setLoading(false); return;
+    }
+
     if (!termsAgreed) {
       setError("Please agree to the Terms of Service");
       triggerShake();
@@ -133,8 +145,8 @@ export default function SignupPage() {
         email: formData.email,
         phone: '+91 ' + formData.phone,
         emergencyContact: {
-          name: formData.emergencyName || 'Emergency Contact',
-          phone: formData.emergencyPhone ? '+91 ' + formData.emergencyPhone : ''
+          name: formData.emergencyName,
+          phone: '+91 ' + formData.emergencyPhone
         },
         loginTime: new Date().toISOString(), // Keep last login time track
         createdAt: new Date().toISOString(),
@@ -272,7 +284,7 @@ export default function SignupPage() {
               </div>
 
               <div className="pt-2">
-                <div className="text-xs font-semibold text-brand-text-muted uppercase mb-3">Emergency Contact (Optional)</div>
+                <div className="text-xs font-semibold text-brand-text-muted uppercase mb-3">Emergency Contact</div>
                 <div className="space-y-3">
                   <div className="relative">
                     <ShieldAlert size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-text-muted" />

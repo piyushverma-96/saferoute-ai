@@ -81,3 +81,10 @@
 .leaflet-control-zoom a:hover {
   background-color: var(--color-brand-card) !important;
 }
+
+@media (max-width: 767px) {
+  .leaflet-container {
+    height: 100dvh !important;
+    width: 100vw !important;
+  }
+}
