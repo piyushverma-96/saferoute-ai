@@ -157,7 +157,7 @@ export default function SignupPage() {
       localStorage.setItem('isLoggedIn', 'true');
       
       speak("Account created successfully. Welcome to SafeRoute AI. You are now protected.");
-      navigate('/app');
+      navigate('/');
       setLoading(false);
     }, 2000);
   };

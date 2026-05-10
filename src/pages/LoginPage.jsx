@@ -52,7 +52,7 @@ export default function LoginPage() {
           })
         );
         localStorage.setItem('isLoggedIn', 'true');
-        navigate('/app');
+        navigate('/');
       } else {
         setError("Please enter valid credentials");
         triggerShake();

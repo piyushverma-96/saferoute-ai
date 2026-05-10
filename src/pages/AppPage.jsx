@@ -123,7 +123,14 @@ export default function AppPage() {
   };
 
   const isNightTime = travelHour >= 19 || travelHour <= 5;
-  const routesFound = routes && routes.length > 0;
+  const routesFound = !!(routes && routes.length > 0);
+
+  const selectRoute = (idx) => {
+    setSelectedRouteId(idx);
+    if (routes && routes[idx]) {
+      speak(`Route ${idx + 1} selected. Safety score ${routes[idx].score}. Distance ${(routes[idx].rawDistance/1000).toFixed(1)} kilometers.`);
+    }
+  };
 
   const handleMobileSOSClick = () => {
     const btn = Array.from(document.querySelectorAll('button')).find(el => el.textContent.includes('SOS') || el.classList.contains('text-brand-danger'));
@@ -385,13 +392,15 @@ export default function AppPage() {
           backdropFilter: 'blur(16px)',
           borderTop: '1px solid #1e293b',
           borderRadius: '20px 20px 0 0',
-          padding: '12px 16px 24px',
+          padding: '12px 16px 32px',
           transform: routesFound ? 'translateY(0)' : 'translateY(100%)',
-          transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-          maxHeight: '200px'
+          transition: 'transform 0.4s ease',
+          display: isMobile ? 'block' : 'none'
         }}>
+          {/* Drag handle */}
           <div style={{
-            width: '36px', height: '4px',
+            width: '36px',
+            height: '4px',
             background: '#374151',
             borderRadius: '2px',
             margin: '0 auto 12px'
@@ -404,82 +413,101 @@ export default function AppPage() {
             textTransform: 'uppercase',
             marginBottom: '10px'
           }}>
-            🛡 Safe Routes Found
+            🛡 {routes?.length || 0} Safe Routes Found
           </div>
 
+          {/* Horizontal scrollable cards */}
           <div style={{
             display: 'flex',
             gap: '10px',
             overflowX: 'auto',
             scrollSnapType: 'x mandatory',
-            paddingBottom: '4px',
+            paddingBottom: '8px',
+            WebkitOverflowScrolling: 'touch',
             scrollbarWidth: 'none'
           }}>
-            {routes && routes.map((route, i) => {
-              const score = route.safetyScore || 0;
-              let label = 'Route';
-              let color = '#60a5fa'; 
-              if (score >= 80) { label = 'Safest'; color = '#10b981'; }
-              else if (score >= 60) { label = 'Safe'; color = '#f59e0b'; }
-              else { label = 'Risk'; color = '#ef4444'; }
-
-              return (
-                <div
-                  key={i}
-                  onClick={() => setSelectedRouteId(i)}
-                  style={{
-                    minWidth: '160px',
-                    background: selectedRouteId === i ? 'rgba(124,58,237,0.15)' : '#1a2332',
-                    border: `1px solid ${selectedRouteId === i ? color : '#2d3748'}`,
-                    borderRadius: '12px',
-                    padding: '10px 12px',
-                    cursor: 'pointer',
-                    scrollSnapAlign: 'start',
-                    flexShrink: 0,
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '4px'
+            {routes && routes.map((route, i) => (
+              <div
+                key={i}
+                onClick={() => selectRoute(i)}
+                style={{
+                  minWidth: '165px',
+                  maxWidth: '165px',
+                  background: selectedRouteId === i
+                    ? 'rgba(124,58,237,0.15)'
+                    : '#1a2332',
+                  border: `1.5px solid ${
+                    selectedRouteId === i
+                      ? route.color
+                      : '#2d3748'
+                  }`,
+                  borderRadius: '12px',
+                  padding: '12px',
+                  cursor: 'pointer',
+                  scrollSnapAlign: 'start',
+                  flexShrink: 0
+                }}
+              >
+                {/* Score + Label */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '6px'
+                }}>
+                  <span style={{
+                    fontSize: '22px',
+                    fontWeight: '600',
+                    color: route.color
                   }}>
-                    <span style={{ fontSize: '20px', fontWeight: '600', color: color }}>
-                      {score}
-                    </span>
-                    <span style={{
-                      fontSize: '9px',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      background: color + '22',
-                      color: color,
-                      fontWeight: '500'
-                    }}>
-                      {label}
-                    </span>
-                  </div>
-
-                  <div style={{
-                    height: '3px',
-                    background: '#243040',
-                    borderRadius: '2px',
-                    marginBottom: '6px'
+                    {route.score}
+                  </span>
+                  <span style={{
+                    fontSize: '9px',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    background: route.color + '22',
+                    color: route.color,
+                    fontWeight: '500'
                   }}>
-                    <div style={{
-                      width: score + '%',
-                      height: '100%',
-                      background: color,
-                      borderRadius: '2px'
-                    }}/>
-                  </div>
-
-                  <div style={{ fontSize: '11px', color: '#64748b' }}>
-                    {(route.distance / 1000).toFixed(1)}km · {Math.round(route.duration / 60)}min
-                  </div>
+                    {i === 0 ? 'SAFEST' : 
+                     i === 1 ? 'MODERATE' : 'FASTEST'}
+                  </span>
                 </div>
-              );
-            })}
+
+                {/* Safety bar */}
+                <div style={{
+                  height: '4px',
+                  background: '#243040',
+                  borderRadius: '2px',
+                  marginBottom: '8px'
+                }}>
+                  <div style={{
+                    width: route.score + '%',
+                    height: '100%',
+                    background: route.color,
+                    borderRadius: '2px'
+                  }}/>
+                </div>
+
+                {/* Distance + Time */}
+                <div style={{
+                  fontSize: '12px',
+                  color: '#64748b',
+                  marginBottom: '6px'
+                }}>
+                  📍 {(route.rawDistance/1000).toFixed(1)}km · ⏱ {Math.round(route.rawDuration/60)}min
+                </div>
+
+                {/* Safety score text */}
+                <div style={{
+                  fontSize: '11px',
+                  color: route.color
+                }}>
+                  Safety: {route.score}/100
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

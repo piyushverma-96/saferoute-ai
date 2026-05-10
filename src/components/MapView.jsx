@@ -133,13 +133,19 @@ function MapUpdater({ startPoint, endPoint, routes, userCoords, setMapLoading })
         }
       });
       if (bounds.length > 0) {
-        map.fitBounds(bounds, { padding: [60, 60] });
+        map.fitBounds(bounds, { 
+          paddingTopLeft: [20, 120],  // top search bar
+          paddingBottomRight: [20, 220] // bottom sheet
+        });
       }
     } else if (startPoint && endPoint) {
       map.fitBounds([
         [startPoint.lat, startPoint.lon],
         [endPoint.lat, endPoint.lon]
-      ], { padding: [60, 60] });
+      ], { 
+        paddingTopLeft: [20, 120],
+        paddingBottomRight: [20, 220]
+      });
     } else if (userCoords) {
       map.flyTo(userCoords, 14, { duration: 1.5 });
     } else if (startPoint) {
