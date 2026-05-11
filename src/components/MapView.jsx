@@ -12,18 +12,19 @@ const MapUpdater = ({
   const map = useMap()
   
   useEffect(() => {
-    if (!map || !routes || routes.length === 0) return
+    if (!map || !routes?.length) return
     
-    // Fit to selected route or first route
-    const targetRoute = selectedRoute || routes[0]
+    // Collect ALL coordinates from all 3 routes
+    const allCoords = routes.flatMap(
+      r => r.coordinates || []
+    )
     
-    if (targetRoute?.coordinates?.length > 0) {
+    if (allCoords.length > 0) {
       try {
-        const bounds = L.latLngBounds(targetRoute.coordinates)
+        const bounds = L.latLngBounds(allCoords)
         map.flyToBounds(bounds, {
-          padding: [60, 60],
+          padding: [80, 80],
           maxZoom: 14,
-          minZoom: 11,
           duration: 1.2
         })
       } catch(e) {
@@ -39,7 +40,7 @@ const MapUpdater = ({
       try {
         const bounds = L.latLngBounds(selectedRoute.coordinates)
         map.flyToBounds(bounds, {
-          padding: [80, 80],
+          padding: [60, 60],
           maxZoom: 15,
           duration: 0.8
         })
