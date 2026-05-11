@@ -168,11 +168,14 @@ const MapView = ({
             positions={route.coordinates || []}
             pathOptions={{
               color: route.color,
-              weight: isSelected ? 8 : route.weight,
-              opacity: noneSelected ? route.opacity
-                     : isSelected ? 1.0 : 0.15,
-              dashArray: route.dashArray,
-              smoothFactor: route.smoothFactor || 3,
+              weight: isSelected ? 8 
+                    : route.weight,
+              opacity: noneSelected ? 0.85
+                     : isSelected ? 1.0 : 0.2,
+              dashArray: isSelected 
+                ? null 
+                : route.dashArray,
+              smoothFactor: 5,
               lineCap: 'round',
               lineJoin: 'round'
             }}

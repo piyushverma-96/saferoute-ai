@@ -1,41 +1,18 @@
 import { useState, useCallback } from 'react';
 import { geocode } from '../utils/geocoding';
 
+// SIMPLE mock routes - NO sin/cos
 const generateMockRoutes = (start, end) => {
-  const startLat = start[0];
-  const startLng = start[1];
-  const endLat = end[0];
-  const endLng = end[1];
+  const hour = new Date().getHours()
+  const penalty = hour >= 19 ? 15 
+               : hour >= 17 ? 8 : 0
   
-  const midLat = (startLat + endLat) / 2;
-  const midLng = (startLng + endLng) / 2;
-  
-  const safeCoords = [
-    [startLat, startLng],
-    [midLat + 0.02, midLng - 0.01],
-    [midLat + 0.025, midLng + 0.01],
-    [midLat + 0.015, midLng + 0.02],
-    [endLat, endLng]
-  ];
-  
-  const moderateCoords = [
-    [startLat, startLng],
-    [midLat + 0.005, midLng - 0.005],
-    [midLat, midLng],
-    [midLat - 0.005, midLng + 0.005],
-    [endLat, endLng]
-  ];
-  
-  const riskyCoords = [
-    [startLat, startLng],
-    [midLat - 0.015, midLng - 0.01],
-    [midLat - 0.025, midLng + 0.01],
-    [midLat - 0.015, midLng + 0.02],
-    [endLat, endLng]
-  ];
-  
-  const hour = new Date().getHours();
-  const penalty = hour >= 19 ? 15 : hour >= 17 ? 8 : 0;
+  const s = start
+  const e = end
+  const mid = [
+    (s[0]+e[0])/2,
+    (s[1]+e[1])/2
+  ]
   
   return [
     {
@@ -44,20 +21,32 @@ const generateMockRoutes = (start, end) => {
       type: 'safe',
       color: '#00C896',
       weight: 6,
-      coordinates: safeCoords,
+      dashArray: null,
+      // Simple 3-point route going NORTH
+      coordinates: [
+        s,
+        [mid[0]+0.02, mid[1]+0.01],
+        e
+      ],
       score: Math.max(0, 85 - penalty),
-      distance: '3.8',
-      duration: 22,
-      dist: '3.8 km',
-      time: '22 min',
-      rawDistance: 3800,
-      tags: ['CCTV', 'Well Lit', 'Police Nearby'],
+      distance: '4.2',
+      duration: 20,
+      dist: '4.2 km',
+      time: '20 min',
+      rawDistance: 4200,
+      tags: ['CCTV','Well Lit',
+             'Police Nearby'],
       factors: [
-        { icon: '💡', name: 'Street Lighting', score: 9 },
-        { icon: '📹', name: 'CCTV Coverage', score: 8 },
-        { icon: '🚔', name: 'Police Proximity', score: 9 },
-        { icon: '👥', name: 'Crowd Density', score: 7 },
-        { icon: '📊', name: 'Crime History', score: 8 }
+        {icon:'💡',
+         name:'Street Lighting',score:9},
+        {icon:'📹',
+         name:'CCTV Coverage',score:8},
+        {icon:'🚔',
+         name:'Police Proximity',score:9},
+        {icon:'👥',
+         name:'Crowd Density',score:7},
+        {icon:'📊',
+         name:'Crime History',score:8}
       ],
       confidence: 94
     },
@@ -67,20 +56,28 @@ const generateMockRoutes = (start, end) => {
       type: 'moderate',
       color: '#F59E0B',
       weight: 5,
-      coordinates: moderateCoords,
+      dashArray: '10 6',
+      // Direct route
+      coordinates: [s, mid, e],
       score: Math.max(0, 65 - penalty),
-      distance: '3.2',
-      duration: 18,
-      dist: '3.2 km',
-      time: '18 min',
-      rawDistance: 3200,
-      tags: ['Moderate Risk', 'Some Lighting'],
+      distance: '3.5',
+      duration: 16,
+      dist: '3.5 km',
+      time: '16 min',
+      rawDistance: 3500,
+      tags: ['Moderate Risk',
+             'Some Lighting'],
       factors: [
-        { icon: '💡', name: 'Street Lighting', score: 6 },
-        { icon: '📹', name: 'CCTV Coverage', score: 5 },
-        { icon: '🚔', name: 'Police Proximity', score: 6 },
-        { icon: '👥', name: 'Crowd Density', score: 7 },
-        { icon: '📊', name: 'Crime History', score: 5 }
+        {icon:'💡',
+         name:'Street Lighting',score:6},
+        {icon:'📹',
+         name:'CCTV Coverage',score:5},
+        {icon:'🚔',
+         name:'Police Proximity',score:6},
+        {icon:'👥',
+         name:'Crowd Density',score:7},
+        {icon:'📊',
+         name:'Crime History',score:5}
       ],
       confidence: 87
     },
@@ -89,25 +86,37 @@ const generateMockRoutes = (start, end) => {
       name: 'High Risk Route',
       type: 'risky',
       color: '#FF6B6B',
-      weight: 5,
-      coordinates: riskyCoords,
+      weight: 4,
+      dashArray: '6 8',
+      // Simple 3-point going SOUTH
+      coordinates: [
+        s,
+        [mid[0]-0.02, mid[1]-0.01],
+        e
+      ],
       score: Math.max(0, 35 - penalty),
-      distance: '2.6',
-      duration: 14,
-      dist: '2.6 km',
-      time: '14 min',
-      rawDistance: 2600,
-      tags: ['⚠ High Risk', 'Poor Lighting', 'No CCTV'],
+      distance: '2.8',
+      duration: 13,
+      dist: '2.8 km',
+      time: '13 min',
+      rawDistance: 2800,
+      tags: ['⚠ High Risk',
+             'Poor Lighting','No CCTV'],
       factors: [
-        { icon: '💡', name: 'Street Lighting', score: 3 },
-        { icon: '📹', name: 'CCTV Coverage', score: 2 },
-        { icon: '🚔', name: 'Police Proximity', score: 3 },
-        { icon: '👥', name: 'Crowd Density', score: 4 },
-        { icon: '📊', name: 'Crime History', score: 2 }
+        {icon:'💡',
+         name:'Street Lighting',score:3},
+        {icon:'📹',
+         name:'CCTV Coverage',score:2},
+        {icon:'🚔',
+         name:'Police Proximity',score:3},
+        {icon:'👥',
+         name:'Crowd Density',score:4},
+        {icon:'📊',
+         name:'Crime History',score:2}
       ],
       confidence: 91
     }
-  ];
+  ]
 }
 
 export function useRoutes() {
@@ -151,42 +160,35 @@ export function useRoutes() {
         const res = await fetch(url)
         const data = await res.json()
         
+        if (!data.routes?.length) {
+          throw new Error('no routes')
+        }
+        
         const hour = travelHour || new Date().getHours()
         const penalty = hour >= 19 ? 15 
                      : hour >= 17 ? 8 : 0
         
-        // Get base coordinates
-        const base = data.routes[0]
-          .geometry.coordinates
-          .map(([lng, lat]) => [lat, lng])
+        // Convert coordinates helper
+        const toLatLng = (coords) =>
+          coords.map(([lng, lat]) => [lat, lng])
         
-        // Alt route if available
-        const alt = data.routes[1]
-          ? data.routes[1].geometry.coordinates
-              .map(([lng, lat]) => [lat, lng])
-          : null
-        
-        // Create 3 visually different routes
-        // Route 1: SAFE = base route
-        const safeCoords = base
-        
-        // Route 2: MODERATE = alt or offset
-        const moderateCoords = alt || 
-          base.map(([lat, lng], i) => [
-            lat + Math.sin(i * 0.5) * 0.004,
-            lng + Math.cos(i * 0.5) * 0.003
-          ])
-        
-        // Route 3: RISKY = different offset
-        const riskyCoords = base.map(
-          ([lat, lng], i) => [
-            lat - Math.sin(i * 0.3) * 0.005,
-            lng - Math.cos(i * 0.4) * 0.004
-          ]
+        // Get real routes from OSRM
+        const r0 = toLatLng(
+          data.routes[0].geometry.coordinates
         )
+        const r1 = data.routes[1] 
+          ? toLatLng(
+              data.routes[1].geometry.coordinates
+            )
+          : r0  // fallback to same route
+        const r2 = data.routes[2]
+          ? toLatLng(
+              data.routes[2].geometry.coordinates
+            )
+          : r0  // fallback to same route
         
-        const dist = data.routes[0].distance
-        const dur = data.routes[0].duration
+        const d0 = data.routes[0].distance
+        const t0 = data.routes[0].duration
         
         finalRoutes = [
           {
@@ -195,23 +197,27 @@ export function useRoutes() {
             type: 'safe',
             color: '#00C896',
             weight: 6,
-            opacity: 0.95,
             dashArray: null,
-            smoothFactor: 3,
-            coordinates: safeCoords,
+            coordinates: r1,
             score: Math.max(0, 85 - penalty),
-            distance: (dist*1.15/1000).toFixed(1),
-            duration: Math.round(dur*1.2/60),
-            dist: (dist*1.15/1000).toFixed(1) + ' km',
-            time: Math.round(dur*1.2/60) + ' min',
-            rawDistance: dist * 1.15,
-            tags: ['CCTV','Well Lit','Police Nearby'],
+            distance: (d0*1.1/1000).toFixed(1),
+            duration: Math.round(t0*1.15/60),
+            dist: (d0*1.1/1000).toFixed(1) + ' km',
+            time: Math.round(t0*1.15/60) + ' min',
+            rawDistance: d0 * 1.1,
+            tags: ['CCTV','Well Lit',
+                   'Police Nearby'],
             factors: [
-              {icon:'💡',name:'Street Lighting',score:9},
-              {icon:'📹',name:'CCTV Coverage',score:8},
-              {icon:'🚔',name:'Police Proximity',score:9},
-              {icon:'👥',name:'Crowd Density',score:7},
-              {icon:'📊',name:'Crime History',score:8}
+              {icon:'💡',
+               name:'Street Lighting',score:9},
+              {icon:'📹',
+               name:'CCTV Coverage',score:8},
+              {icon:'🚔',
+               name:'Police Proximity',score:9},
+              {icon:'👥',
+               name:'Crowd Density',score:7},
+              {icon:'📊',
+               name:'Crime History',score:8}
             ],
             confidence: 94
           },
@@ -221,23 +227,27 @@ export function useRoutes() {
             type: 'moderate',
             color: '#F59E0B',
             weight: 5,
-            opacity: 0.9,
-            dashArray: '12 6',
-            smoothFactor: 3,
-            coordinates: moderateCoords,
+            dashArray: '10 6',
+            coordinates: r0,
             score: Math.max(0, 65 - penalty),
-            distance: (dist/1000).toFixed(1),
-            duration: Math.round(dur/60),
-            dist: (dist/1000).toFixed(1) + ' km',
-            time: Math.round(dur/60) + ' min',
-            rawDistance: dist,
-            tags: ['Moderate Risk','Some Lighting'],
+            distance: (d0/1000).toFixed(1),
+            duration: Math.round(t0/60),
+            dist: (d0/1000).toFixed(1) + ' km',
+            time: Math.round(t0/60) + ' min',
+            rawDistance: d0,
+            tags: ['Moderate Risk',
+                   'Some Lighting'],
             factors: [
-              {icon:'💡',name:'Street Lighting',score:6},
-              {icon:'📹',name:'CCTV Coverage',score:5},
-              {icon:'🚔',name:'Police Proximity',score:6},
-              {icon:'👥',name:'Crowd Density',score:7},
-              {icon:'📊',name:'Crime History',score:5}
+              {icon:'💡',
+               name:'Street Lighting',score:6},
+              {icon:'📹',
+               name:'CCTV Coverage',score:5},
+              {icon:'🚔',
+               name:'Police Proximity',score:6},
+              {icon:'👥',
+               name:'Crowd Density',score:7},
+              {icon:'📊',
+               name:'Crime History',score:5}
             ],
             confidence: 87
           },
@@ -247,23 +257,27 @@ export function useRoutes() {
             type: 'risky',
             color: '#FF6B6B',
             weight: 4,
-            opacity: 0.85,
-            dashArray: '8 6',
-            smoothFactor: 3,
-            coordinates: riskyCoords,
+            dashArray: '6 8',
+            coordinates: r2,
             score: Math.max(0, 35 - penalty),
-            distance: (dist*0.9/1000).toFixed(1),
-            duration: Math.round(dur*0.85/60),
-            dist: (dist*0.9/1000).toFixed(1) + ' km',
-            time: Math.round(dur*0.85/60) + ' min',
-            rawDistance: dist * 0.9,
-            tags: ['⚠ High Risk','Poor Lighting','No CCTV'],
+            distance: (d0*0.9/1000).toFixed(1),
+            duration: Math.round(t0*0.85/60),
+            dist: (d0*0.9/1000).toFixed(1) + ' km',
+            time: Math.round(t0*0.85/60) + ' min',
+            rawDistance: d0 * 0.9,
+            tags: ['⚠ High Risk',
+                   'Poor Lighting','No CCTV'],
             factors: [
-              {icon:'💡',name:'Street Lighting',score:3},
-              {icon:'📹',name:'CCTV Coverage',score:2},
-              {icon:'🚔',name:'Police Proximity',score:3},
-              {icon:'👥',name:'Crowd Density',score:4},
-              {icon:'📊',name:'Crime History',score:2}
+              {icon:'💡',
+               name:'Street Lighting',score:3},
+              {icon:'📹',
+               name:'CCTV Coverage',score:2},
+              {icon:'🚔',
+               name:'Police Proximity',score:3},
+              {icon:'👥',
+               name:'Crowd Density',score:4},
+              {icon:'📊',
+               name:'Crime History',score:2}
             ],
             confidence: 91
           }
