@@ -154,6 +154,17 @@ import TrackingPage from './pages/TrackingPage';
 function App() {
   const { isSOSActive, toggleSOS, closeSOS, userId } = useSOS();
 
+  useEffect(() => {
+    const unlockAudio = () => {
+      const utterance = new SpeechSynthesisUtterance('');
+      window.speechSynthesis.speak(utterance);
+    };
+    document.addEventListener('touchstart', unlockAudio, { once: true });
+    return () => {
+      document.removeEventListener('touchstart', unlockAudio);
+    };
+  }, []);
+
   return (
     <BrowserRouter>
       <div className="min-h-screen flex flex-col relative">

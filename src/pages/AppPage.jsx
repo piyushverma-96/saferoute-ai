@@ -16,7 +16,17 @@ export default function AppPage() {
   const [gpsAccuracy, setGpsAccuracy] = useState(null);
 
   const { routes, isLoading, error, fetchRoutes, startPoint, endPoint } = useRoutes();
-  const { speak } = useVoiceNavigation();
+  const { speak, language } = useVoiceNavigation();
+
+  useEffect(() => {
+    setTimeout(() => {
+      speak(
+        language === 'hi'
+        ? 'SafeRoute AI में आपका स्वागत है। अपना गंतव्य दर्ज करें।'
+        : 'Welcome to SafeRoute AI. Enter your destination to find safe routes.'
+      );
+    }, 1500);
+  }, []);
 
   const detectLocation = () => {
     setIsDetectingLocation(true);
@@ -122,14 +132,19 @@ export default function AppPage() {
   const isNightTime = travelHour >= 19 || travelHour <= 5;
   const routesFound = !!(routes && routes.length > 0);
 
-  const selectRoute = (idx) => {
-    setSelectedRouteId(idx);
-    if (routes && routes[idx]) {
-      speak(`Route ${idx + 1} selected. Safety score ${routes[idx].score}. Distance ${(routes[idx].rawDistance/1000).toFixed(1)} kilometers.`);
+  const handleRouteSelect = (route) => {
+    setSelectedRoute(route);
+    if (route) {
+      speak(
+        language === 'hi'
+        ? `${route.name} चुना गया। दूरी ${route.distance} किलोमीटर। सुरक्षा स्कोर ${route.score}`
+        : `${route.name} selected. Distance ${route.distance} kilometers. Safety score ${route.score} out of 100.`
+      );
     }
   };
 
   const handleMobileSOSClick = () => {
+    speak('SOS activated. Sharing live location now. Help is on the way.');
     const btn = Array.from(document.querySelectorAll('button')).find(el => el.textContent.includes('SOS') || el.classList.contains('text-brand-danger'));
     if (btn) btn.click();
   };
@@ -158,7 +173,7 @@ export default function AppPage() {
         isLoading={isLoading}
         error={error}
         selectedRoute={selectedRoute}
-        setSelectedRoute={setSelectedRoute}
+        onRouteSelect={handleRouteSelect}
         userCoords={userCoords}
         isDetectingLocation={isDetectingLocation}
         locationError={locationError}
@@ -173,7 +188,7 @@ export default function AppPage() {
           startCoords={startPoint ? [startPoint.lat, startPoint.lon] : null} 
           endCoords={endPoint ? [endPoint.lat, endPoint.lon] : null} 
           selectedRoute={selectedRoute}
-          onRouteSelect={setSelectedRoute}
+          onRouteSelect={handleRouteSelect}
           userCoords={userCoords}
         />
       </div>

@@ -6,32 +6,57 @@ import 'leaflet/dist/leaflet.css'
 // Map updater component
 const MapUpdater = ({ 
   selectedRoute, 
-  userCoords 
+  userCoords,
+  routes
 }) => {
   const map = useMap()
   
   useEffect(() => {
-    if (!map) return
+    if (!map || !routes || routes.length === 0) return
     
-    if (selectedRoute?.coordinates?.length > 0) {
+    // Fit to selected route or first route
+    const targetRoute = selectedRoute || routes[0]
+    
+    if (targetRoute?.coordinates?.length > 0) {
       try {
-        const bounds = L.latLngBounds(
-          selectedRoute.coordinates
-        )
+        const bounds = L.latLngBounds(targetRoute.coordinates)
         map.flyToBounds(bounds, {
-          padding: [80, 80],
-          maxZoom: 15,
-          duration: 1.0
+          padding: [60, 60],
+          maxZoom: 14,
+          minZoom: 11,
+          duration: 1.2
         })
       } catch(e) {
         console.log('bounds error:', e)
       }
-    } else if (userCoords) {
+    }
+  }, [routes, map])
+
+  useEffect(() => {
+    if (!map || !selectedRoute) return
+    
+    if (selectedRoute?.coordinates?.length > 0) {
+      try {
+        const bounds = L.latLngBounds(selectedRoute.coordinates)
+        map.flyToBounds(bounds, {
+          padding: [80, 80],
+          maxZoom: 15,
+          duration: 0.8
+        })
+      } catch(e) {
+        console.log('bounds error:', e)
+      }
+    }
+  }, [selectedRoute, map])
+  
+  useEffect(() => {
+    if (!map) return
+    if (!selectedRoute && (!routes || routes.length === 0) && userCoords) {
       map.flyTo(userCoords, 13, {
         duration: 1.5
       })
     }
-  }, [selectedRoute, map])
+  }, [userCoords, map, selectedRoute, routes])
   
   return null
 }
@@ -125,6 +150,7 @@ const MapView = ({
       <MapUpdater
         selectedRoute={selectedRoute}
         userCoords={userCoords}
+        routes={routes}
       />
       
       {/* Draw all routes */}
@@ -140,20 +166,21 @@ const MapView = ({
             key={route.id}
             positions={route.coordinates || []}
             pathOptions={{
-              color: route.color || '#888',
-              weight: isSelected ? 8 : 5,
+              color: route.type === 'risky' ? '#EF4444' : route.type === 'moderate' ? '#F59E0B' : '#00C896',
+              weight: isSelected ? 7 : (route.type === 'risky' ? 4 : route.type === 'moderate' ? 4 : 5),
               opacity: noneSelected
-                ? 0.8
+                ? (route.type === 'risky' ? 0.8 : route.type === 'moderate' ? 0.85 : 0.9)
                 : isSelected
                 ? 1.0
                 : 0.15,
+              smoothFactor: 2,
               lineCap: 'round',
               lineJoin: 'round',
               dashArray: 
                 route.type === 'risky'
-                  ? '10 6'
+                  ? '8 8'
                   : route.type === 'moderate'
-                  ? '15 5'
+                  ? '12 6'
                   : null
             }}
             eventHandlers={{

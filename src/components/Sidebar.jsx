@@ -17,7 +17,7 @@ export default function Sidebar({
   isLoading, 
   error,
   selectedRoute,
-  setSelectedRoute,
+  onRouteSelect,
   userCoords,
   isDetectingLocation,
   locationError,
@@ -81,27 +81,22 @@ export default function Sidebar({
     }
   }, [travelHour, speak]);
 
-  // Voice announcement when route is selected
+  // Voice announcement when routes load
   useEffect(() => {
-    if (routes && routes.length > 0 && selectedRoute !== null) {
-      const route = selectedRoute;
-      if (route) {
-        const riskLevel = route.score >= 70 ? 'Safe' : route.score >= 40 ? 'Moderate risk' : 'High risk';
-        const riskLevelHi = route.score >= 70 ? 'सुरक्षित' : route.score >= 40 ? 'मध्यम जोखिम वाला' : 'उच्च जोखिम वाला';
-        
-        speak(
-          `AI has analyzed 5 safety factors for this route. Safety score is ${route.score} out of 100. ${riskLevel} route selected. Distance ${route.dist}.`,
-          `AI ने इस रास्ते के 5 सुरक्षा कारकों का विश्लेषण किया है। सुरक्षा स्कोर ${route.score} है। ${riskLevelHi} रास्ता चुना गया है। दूरी ${route.dist} है।`
-        );
-      }
+    if (routes && routes.length > 0) {
+      speak(
+        language === 'hi'
+        ? `${routes.length} रास्ते मिले। सबसे सुरक्षित रास्ता चुना गया।`
+        : `${routes.length} routes found. Safest route selected automatically.`
+      );
     }
-  }, [selectedRoute, routes, speak]);
+  }, [routes, language, speak]);
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (startQuery && endQuery) {
       onSearch(startQuery, endQuery, travelHour);
-      setSelectedRoute(null); // Select first route by default
+      // Select first route by default is handled in AppPage
     }
   };
 
@@ -347,7 +342,7 @@ export default function Sidebar({
                 key={route.id} 
                 route={route} 
                 selected={selectedRoute?.id === route.id}
-                onSelect={(r) => setSelectedRoute(r)}
+                onSelect={(r) => onRouteSelect(r)}
                 travelTime={travelHour >= 19 || travelHour < 6 ? 'night' : travelHour >= 17 ? 'evening' : 'day'}
               />
             ))
