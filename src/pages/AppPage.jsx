@@ -170,10 +170,10 @@ export default function AppPage() {
       <div className="map-container flex-1 relative z-0 h-full w-full lg:w-[calc(100%-320px)]">
         <MapView 
           routes={routes} 
-          startPoint={startPoint} 
-          endPoint={endPoint} 
+          startCoords={startPoint ? [startPoint.lat, startPoint.lon] : null} 
+          endCoords={endPoint ? [endPoint.lat, endPoint.lon] : null} 
           selectedRoute={selectedRoute}
-          setSelectedRoute={setSelectedRoute}
+          onRouteSelect={setSelectedRoute}
           userCoords={userCoords}
         />
       </div>
