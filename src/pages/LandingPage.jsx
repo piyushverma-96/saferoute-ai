@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Shield, Play, Map, AlertTriangle, Radio, Users, MapPin, Brain, ShieldCheck } from 'lucide-react';
+import SOSModal from '../components/SOSModal';
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const [showSOS, setShowSOS] = useState(false);
   const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
 
   const handleGetStarted = () => {
@@ -74,7 +76,7 @@ export default function LandingPage() {
             <p className="text-xs text-brand-text-secondary">AI-analyzed paths</p>
           </div>
           <div 
-            onClick={() => navigate('/app')}
+            onClick={() => setShowSOS(true)}
             className="flex flex-col items-center justify-center text-center p-4 rounded-xl border border-transparent hover:border-[#7C3AED] hover:scale-[1.02] transition-all duration-200 cursor-pointer"
           >
             <AlertTriangle className="text-brand-danger mb-2" size={28} />
@@ -165,6 +167,13 @@ export default function LandingPage() {
         </div>
 
       </div>
+
+      {showSOS && (
+        <SOSModal 
+          isOpen={showSOS}
+          onClose={() => setShowSOS(false)} 
+        />
+      )}
     </div>
   );
 }
