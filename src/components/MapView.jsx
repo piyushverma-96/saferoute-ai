@@ -166,8 +166,8 @@ const MapView = ({
             key={route.id}
             positions={route.coordinates || []}
             pathOptions={{
-              color: route.type === 'risky' ? '#EF4444' : route.type === 'moderate' ? '#F59E0B' : '#00C896',
-              weight: isSelected ? 7 : (route.type === 'risky' ? 4 : route.type === 'moderate' ? 4 : 5),
+              color: route.type === 'risky' ? '#FF6B6B' : route.type === 'moderate' ? '#F59E0B' : '#00C896',
+              weight: isSelected ? 8 : (route.type === 'risky' ? 5 : route.type === 'moderate' ? 5 : 6),
               opacity: noneSelected
                 ? (route.type === 'risky' ? 0.8 : route.type === 'moderate' ? 0.85 : 0.9)
                 : isSelected
@@ -178,7 +178,7 @@ const MapView = ({
               lineJoin: 'round',
               dashArray: 
                 route.type === 'risky'
-                  ? '8 8'
+                  ? '8 5'
                   : route.type === 'moderate'
                   ? '12 6'
                   : null
