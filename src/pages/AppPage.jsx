@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import MapView from '../components/MapView';
+import Navbar from '../components/Navbar';
 import { useRoutes } from '../hooks/useRoutes';
 import { useVoiceNavigation } from '../hooks/useVoiceNavigation';
 
@@ -15,8 +16,17 @@ export default function AppPage() {
   const [locationError, setLocationError] = useState('');
   const [gpsAccuracy, setGpsAccuracy] = useState(null);
 
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
   const { routes, isLoading, error, fetchRoutes, startPoint, endPoint } = useRoutes();
   const { speak, language } = useVoiceNavigation();
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     setTimeout(() => {
@@ -121,6 +131,9 @@ export default function AppPage() {
     if (!start || !end) return;
     fetchRoutes(start, end, hour);
     setSelectedRoute(null);
+    if (isMobile) {
+      setSidebarOpen(true);
+    }
   };
 
   useEffect(() => {
@@ -130,7 +143,6 @@ export default function AppPage() {
   }, [routes]);
 
   const isNightTime = travelHour >= 19 || travelHour <= 5;
-  const routesFound = !!(routes && routes.length > 0);
 
   const handleRouteSelect = (route) => {
     setSelectedRoute(route);
@@ -140,59 +152,169 @@ export default function AppPage() {
         ? `${route.name} चुना गया। दूरी ${route.distance} किलोमीटर। सुरक्षा स्कोर ${route.score}`
         : `${route.name} selected. Distance ${route.distance} kilometers. Safety score ${route.score} out of 100.`
       );
+      if (isMobile) {
+        setSidebarOpen(false); // Optionally hide sidebar to see the map after selecting
+      }
     }
   };
 
-  const handleMobileSOSClick = () => {
-    speak('SOS activated. Sharing live location now. Help is on the way.');
-    const btn = Array.from(document.querySelectorAll('button')).find(el => el.textContent.includes('SOS') || el.classList.contains('text-brand-danger'));
-    if (btn) btn.click();
-  };
-
   return (
-    <div className="flex flex-col lg:flex-row h-[calc(100vh-64px)] overflow-hidden bg-brand-bg relative">
+    <div style={{
+      height: '100vh',
+      width: '100vw',
+      position: 'relative',
+      overflow: 'hidden',
+      background: '#0A0A0F'
+    }}>
       
-      {/* Night Time Warning Banner */}
+      {/* NAVBAR - fixed top */}
+      <div style={{ position: 'relative', zIndex: 50 }}>
+        <Navbar />
+      </div>
+      
+      {/* NIGHT BANNER */}
       {isNightTime && (
-        <div className="absolute top-0 left-0 right-0 z-50 bg-brand-warning/20 border-b border-brand-warning/30 backdrop-blur-md px-4 py-2 flex items-center justify-center gap-2 text-brand-warning font-medium text-sm animate-in slide-in-from-top">
+        <div className="absolute top-[64px] left-0 right-0 z-[40] bg-brand-warning/20 border-b border-brand-warning/30 backdrop-blur-md px-4 py-2 flex items-center justify-center gap-2 text-brand-warning font-medium text-sm">
           <AlertTriangle size={16} />
           <span>⚠ Night travel detected — extra precautions recommended</span>
         </div>
       )}
-
-      {/* Sidebar */}
-      <Sidebar 
-        startQuery={startQuery}
-        setStartQuery={setStartQuery}
-        endQuery={endQuery}
-        setEndQuery={setEndQuery}
-        travelHour={travelHour}
-        setTravelHour={setTravelHour}
-        onSearch={handleSearch}
-        routes={routes}
-        isLoading={isLoading}
-        error={error}
-        selectedRoute={selectedRoute}
-        onRouteSelect={handleRouteSelect}
-        userCoords={userCoords}
-        isDetectingLocation={isDetectingLocation}
-        locationError={locationError}
-        gpsAccuracy={gpsAccuracy}
-        detectLocation={detectLocation}
-      />
-
-      {/* Map Area */}
-      <div className="map-container flex-1 relative z-0 h-full w-full lg:w-[calc(100%-320px)]">
-        <MapView 
-          routes={routes} 
-          startCoords={startPoint ? [startPoint.lat, startPoint.lon] : null} 
-          endCoords={endPoint ? [endPoint.lat, endPoint.lon] : null} 
+      
+      {/* MAP - always full screen */}
+      <div style={{
+        position: 'absolute',
+        top: '64px',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 1
+      }}>
+        <MapView
+          routes={routes}
           selectedRoute={selectedRoute}
           onRouteSelect={handleRouteSelect}
+          startCoords={startPoint ? [startPoint.lat, startPoint.lon] : null}
+          endCoords={endPoint ? [endPoint.lat, endPoint.lon] : null}
           userCoords={userCoords}
         />
       </div>
-
+      
+      {/* DESKTOP SIDEBAR */}
+      {!isMobile && (
+        <div style={{
+          position: 'absolute',
+          top: '64px',
+          left: 0,
+          width: '320px',
+          height: 'calc(100vh - 64px)',
+          zIndex: 10,
+          background: 'rgba(10,10,15,0.95)',
+          backdropFilter: 'blur(10px)',
+          overflowY: 'auto',
+          borderRight: '1px solid rgba(255,255,255,0.1)'
+        }}>
+          <Sidebar
+            startQuery={startQuery}
+            setStartQuery={setStartQuery}
+            endQuery={endQuery}
+            setEndQuery={setEndQuery}
+            travelHour={travelHour}
+            setTravelHour={setTravelHour}
+            routes={routes}
+            selectedRoute={selectedRoute}
+            onRouteSelect={handleRouteSelect}
+            onSearch={handleSearch}
+            isLoading={isLoading}
+            isDetectingLocation={isDetectingLocation}
+            locationError={locationError}
+            gpsAccuracy={gpsAccuracy}
+            detectLocation={detectLocation}
+            error={error}
+          />
+        </div>
+      )}
+      
+      {/* MOBILE BOTTOM SHEET */}
+      {isMobile && (
+        <>
+          {/* Toggle button - floating */}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            style={{
+              position: 'absolute',
+              bottom: sidebarOpen ? '64vh' : '20px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 20,
+              background: '#7C3AED',
+              border: 'none',
+              borderRadius: '20px',
+              padding: '8px 20px',
+              color: 'white',
+              fontSize: '13px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 4px 20px rgba(124,58,237,0.4)',
+              transition: 'bottom 0.3s ease'
+            }}
+          >
+            {sidebarOpen ? '▼ Hide Panel' : '▲ Route Planner'}
+          </button>
+          
+          {/* Bottom Sheet */}
+          <div style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: sidebarOpen ? '62vh' : '0',
+            zIndex: 15,
+            background: 'rgba(10,10,15,0.97)',
+            backdropFilter: 'blur(15px)',
+            borderRadius: '20px 20px 0 0',
+            border: '1px solid rgba(255,255,255,0.1)',
+            transition: 'height 0.3s ease',
+            overflow: 'hidden'
+          }}>
+            {/* Drag handle */}
+            <div style={{
+              width: '40px',
+              height: '4px',
+              background: 'rgba(255,255,255,0.3)',
+              borderRadius: '2px',
+              margin: '12px auto 0'
+            }} />
+            
+            {/* Scrollable content */}
+            <div style={{
+              height: 'calc(100% - 20px)',
+              overflowY: 'auto',
+              padding: '0 16px 20px'
+            }}>
+              <Sidebar
+                startQuery={startQuery}
+                setStartQuery={setStartQuery}
+                endQuery={endQuery}
+                setEndQuery={setEndQuery}
+                travelHour={travelHour}
+                setTravelHour={setTravelHour}
+                routes={routes}
+                selectedRoute={selectedRoute}
+                onRouteSelect={handleRouteSelect}
+                onSearch={handleSearch}
+                isLoading={isLoading}
+                isDetectingLocation={isDetectingLocation}
+                locationError={locationError}
+                gpsAccuracy={gpsAccuracy}
+                detectLocation={detectLocation}
+                error={error}
+              />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -108,14 +108,14 @@ export default function Sidebar({
 
   return (
     <div 
-      className="sidebar w-full lg:w-[320px] shrink-0 border-r border-brand-border h-[calc(100vh-64px)] flex flex-col z-20"
-      style={{ background: 'rgba(15, 15, 30, 0.95)', backdropFilter: 'blur(10px)' }}
+      className="sidebar w-full h-full flex flex-col z-20"
+      style={{ background: 'transparent' }}
     >
       
       {/* Input Form Area */}
-      <div className="p-5 border-b border-brand-border shrink-0">
-        <div className="mb-4">
-          <h2 className="text-xl font-bold flex items-center gap-2 mb-1">
+      <div className="border-b border-brand-border shrink-0" style={{ padding: '12px 16px 8px' }}>
+        <div className="mb-3">
+          <h2 className="font-bold flex items-center gap-2 mb-1" style={{ fontSize: '16px' }}>
             <span className="w-6 h-6 rounded bg-brand-purple/20 text-brand-purple flex items-center justify-center">
               <Navigation size={14} />
             </span>
@@ -124,18 +124,19 @@ export default function Sidebar({
           <p className="text-xs text-brand-text-secondary">AI-Optimized for Safety & Speed</p>
         </div>
 
-        <form onSubmit={handleSearch} className="space-y-4">
+        <form onSubmit={handleSearch} className="space-y-3">
           <div className="relative">
             <div className={`absolute left-3 top-1/2 -translate-y-1/2 ${isDetectingLocation ? 'text-brand-purple animate-pulse' : (gpsAccuracy ? 'text-brand-safe' : 'text-brand-text-muted')}`}>
               <MapPin size={16} fill="currentColor" className={!gpsAccuracy && !isDetectingLocation ? "opacity-20" : ""} />
             </div>
             <input 
               type="text" 
-              placeholder={isDetectingLocation ? "📍 Detecting your location..." : "Starting Location..."}
+              placeholder={isDetectingLocation ? "📍 Detecting location..." : "Starting Location..."}
               value={startQuery}
               onChange={(e) => setStartQuery(e.target.value)}
               disabled={isDetectingLocation}
-              className="w-full bg-brand-bg border border-brand-border rounded-lg py-2.5 pl-10 pr-10 text-sm focus:outline-none focus:border-brand-purple focus:ring-1 focus:ring-brand-purple transition-all disabled:opacity-70 disabled:cursor-wait"
+              style={{ width: '100%', padding: '10px 40px 10px 40px', fontSize: '14px' }}
+              className="bg-brand-bg border border-brand-border rounded-lg focus:outline-none focus:border-brand-purple focus:ring-1 focus:ring-brand-purple transition-all disabled:opacity-70 disabled:cursor-wait"
             />
             <button 
               type="button"
@@ -147,7 +148,7 @@ export default function Sidebar({
             </button>
             {gpsAccuracy && !locationError && (
               <div className={`text-[11px] mt-1 ml-1 ${gpsAccuracy < 50 ? 'text-brand-safe' : gpsAccuracy <= 200 ? 'text-brand-warning' : 'text-brand-danger'}`}>
-                {gpsAccuracy < 50 ? "📍 High accuracy" : gpsAccuracy <= 200 ? "📍 Approximate location" : "📍 Low accuracy — try outdoors"}
+                {gpsAccuracy < 50 ? "📍 High accuracy" : gpsAccuracy <= 200 ? "📍 Approximate" : "📍 Low accuracy"}
               </div>
             )}
             {locationError && (
@@ -168,7 +169,8 @@ export default function Sidebar({
               onChange={(e) => setEndQuery(e.target.value)}
               onFocus={handleDestinationFocus}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-              className="w-full bg-brand-bg border border-brand-border rounded-lg py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:border-brand-purple focus:ring-1 focus:ring-brand-purple transition-all"
+              style={{ width: '100%', padding: '10px 12px 10px 40px', fontSize: '14px' }}
+              className="bg-brand-bg border border-brand-border rounded-lg focus:outline-none focus:border-brand-purple focus:ring-1 focus:ring-brand-purple transition-all"
             />
             {showSuggestions && destinationSuggestions.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-[#1A1A2E] border border-brand-purple rounded-lg shadow-xl z-50 overflow-hidden">
@@ -186,21 +188,11 @@ export default function Sidebar({
           </div>
 
           <div>
-            <p style={{
-              color: '#888',
-              fontSize: '11px',
-              marginTop: '12px',
-              marginBottom: '4px',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px'
-            }}>
-              ⏰ Time of Travel
-            </p>
             <div style={{
               display: 'flex',
-              gap: '8px',
+              gap: '6px',
               width: '100%',
-              marginTop: '12px'
+              marginTop: '8px'
             }}>
               {timeOptions.map((opt) => (
                 <button
@@ -209,7 +201,7 @@ export default function Sidebar({
                   onClick={() => setTravelHour(opt.value)}
                   style={{
                     flex: 1,
-                    padding: '10px 4px',
+                    padding: '8px 4px',
                     borderRadius: '10px',
                     border: travelHour === opt.value 
                       ? '2px solid #7C3AED'
@@ -241,7 +233,8 @@ export default function Sidebar({
             <button 
               type="submit"
               disabled={isLoading || !startQuery || !endQuery}
-              className="flex-1 bg-gradient-brand py-3 rounded-xl font-bold text-sm shadow-lg shadow-brand-purple/20 hover:shadow-brand-purple/40 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-white"
+              style={{ width: '100%', padding: '12px', fontSize: '14px' }}
+              className="flex-1 bg-gradient-brand rounded-xl font-bold shadow-lg shadow-brand-purple/20 hover:shadow-brand-purple/40 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-white"
             >
               {isLoading ? (
                 <span className="animate-spin w-4 h-4 border-2 border-white/20 border-t-white rounded-full"></span>
@@ -276,85 +269,56 @@ export default function Sidebar({
               </>
             )}
           </div>
-
-          <div 
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              marginTop: '8px',
-              justifyContent: 'center'
-            }}
-            title="Our AI analyzes 5 safety factors using Random Forest + KNN algorithms trained on 10,000+ incident reports"
-          >
-            <span style={{fontSize: '10px'}}>⚡</span>
-            <span style={{
-              fontSize: '10px',
-              color: '#888',
-              fontFamily: 'monospace'
-            }}>
-              Powered by ML Safety Model v2.1
-            </span>
-          </div>
-
         </form>
       </div>
 
       {/* Routes List Area */}
-      <div className="flex-1 overflow-y-auto p-5 scrollbar-thin scrollbar-thumb-brand-border scrollbar-track-transparent">
-        <h3 className="label-text mb-4 sticky top-0 bg-brand-surface pb-2 z-10 border-b border-brand-border/50">
-          Route Options
-        </h3>
-
-        {error && (
-          <div className="p-3 mb-4 rounded-lg bg-brand-danger/10 border border-brand-danger/30 text-brand-danger text-sm">
-            {error}
-          </div>
-        )}
-
-        {routes.length > 0 && (
+      {routes.length > 0 && (
+        <div style={{ padding: '0 16px' }}>
           <p style={{
             color: '#888',
             fontSize: '11px',
-            marginBottom: '8px'
+            marginBottom: '8px',
+            marginTop: '12px',
+            textTransform: 'uppercase'
           }}>
-            {routes.length} routes found • Scroll to see all
+            🛡 Route Options ({routes.length})
           </p>
-        )}
-        <div style={{
-          overflowY: 'auto',
-          maxHeight: window.innerWidth < 768 
-            ? '45vh'   
-            : '60vh',  
-          paddingRight: '4px',
-          scrollbarWidth: 'thin',
-          scrollbarColor: '#7C3AED transparent'
-        }}>
-          {isLoading ? (
-            <>
-              <SkeletonCard />
-              <SkeletonCard />
-              <SkeletonCard />
-            </>
-          ) : routes.length > 0 ? (
-            routes.map((route) => (
-              <RouteCard 
-                key={route.id} 
-                route={route} 
-                selected={selectedRoute?.id === route.id}
+          
+          <div style={{
+            maxHeight: '35vh',
+            overflowY: 'auto',
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#7C3AED transparent',
+            paddingRight: '4px'
+          }}>
+            {routes.map(route => (
+              <RouteCard
+                key={route.id}
+                route={route}
+                selected={
+                  selectedRoute?.id === route.id
+                }
                 onSelect={(r) => onRouteSelect(r)}
                 travelTime={travelHour >= 19 || travelHour < 6 ? 'night' : travelHour >= 17 ? 'evening' : 'day'}
               />
-            ))
-          ) : (
-            <div className="text-center py-8 text-brand-text-muted">
-              <MapPin size={32} className="mx-auto mb-2 opacity-20" />
-              <p className="text-sm">Enter locations to find safe routes</p>
-            </div>
-          )}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
       
+      {isLoading && (
+        <div style={{ padding: '16px' }}>
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      )}
+      
+      {error && (
+        <div className="m-4 p-3 rounded-lg bg-brand-danger/10 border border-brand-danger/30 text-brand-danger text-sm">
+          {error}
+        </div>
+      )}
     </div>
   );
 }

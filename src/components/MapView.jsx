@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { MapContainer, TileLayer, Polyline, Marker, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Polyline, Marker, useMap, ZoomControl } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -130,14 +130,22 @@ const MapView = ({
 }) => {
   return (
     <MapContainer
+      style={{
+        height: '100vh',
+        width: '100vw',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        zIndex: 1
+      }}
       center={userCoords || [22.7196, 75.8577]}
       zoom={13}
       minZoom={5}
       maxZoom={18}
-      style={{ height: '100%', width: '100%' }}
       preferCanvas={true}
-      zoomControl={true}
+      zoomControl={false}
     >
+      <ZoomControl position="bottomright" />
       <TileLayer
         url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         attribution='© OpenStreetMap © CARTO'
