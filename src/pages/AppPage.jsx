@@ -16,8 +16,6 @@ export default function AppPage() {
   const [locationError, setLocationError] = useState('');
   const [gpsAccuracy, setGpsAccuracy] = useState(null);
 
-  const [gpsAccuracy, setGpsAccuracy] = useState(null);
-
   const { routes, isLoading, error, fetchRoutes, startPoint, endPoint } = useRoutes();
   const { speak } = useVoiceNavigation();
 
