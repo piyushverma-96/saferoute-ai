@@ -110,8 +110,14 @@ export default function AppPage() {
   const handleSearch = (start = startQuery, end = endQuery, hour = travelHour) => {
     if (!start || !end) return;
     fetchRoutes(start, end, hour);
-    setSelectedRouteId(0); // Default to safest route
+    setSelectedRouteId(null);
   };
+
+  useEffect(() => {
+    if (routes && routes.length > 0) {
+      setSelectedRouteId(routes[0].id);
+    }
+  }, [routes]);
 
   const isNightTime = travelHour >= 19 || travelHour <= 5;
   const routesFound = !!(routes && routes.length > 0);
@@ -167,6 +173,7 @@ export default function AppPage() {
           startPoint={startPoint} 
           endPoint={endPoint} 
           selectedRouteId={selectedRouteId}
+          setSelectedRouteId={setSelectedRouteId}
           userCoords={userCoords}
         />
       </div>

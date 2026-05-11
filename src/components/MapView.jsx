@@ -125,17 +125,27 @@ function MapUpdater({ startPoint, endPoint, routes, userCoords, setMapLoading })
   }, [map, setMapLoading]);
 
   useEffect(() => {
-    if (routes && routes.length > 0) {
+    if (routes && routes.length > 0 && selectedRouteId) {
+      const selectedRoute = routes.find(r => r.id === selectedRouteId);
+      if (selectedRoute && selectedRoute.coordinates && selectedRoute.coordinates.length > 0) {
+        const bounds = L.latLngBounds(selectedRoute.coordinates);
+        map.flyToBounds(bounds, {
+          padding: [80, 80],
+          maxZoom: 15,
+          duration: 1.0
+        });
+      }
+    } else if (routes && routes.length > 0) {
       const bounds = [];
       routes.forEach(route => {
-        if (route.geometry && route.geometry.coordinates) {
-          route.geometry.coordinates.forEach(c => bounds.push([c[1], c[0]]));
+        if (route.coordinates) {
+          route.coordinates.forEach(c => bounds.push(c));
         }
       });
       if (bounds.length > 0) {
         map.fitBounds(bounds, { 
-          paddingTopLeft: [20, 120],  // top search bar
-          paddingBottomRight: [20, 220] // bottom sheet
+          paddingTopLeft: [20, 120],
+          paddingBottomRight: [20, 220]
         });
       }
     } else if (startPoint && endPoint) {
@@ -151,12 +161,12 @@ function MapUpdater({ startPoint, endPoint, routes, userCoords, setMapLoading })
     } else if (startPoint) {
       map.setView([startPoint.lat, startPoint.lon], 13);
     }
-  }, [map, startPoint, endPoint, routes, userCoords]);
+  }, [map, startPoint, endPoint, routes, userCoords, selectedRouteId]);
 
   return null;
 }
 
-export default function MapView({ routes, startPoint, endPoint, selectedRouteId, userCoords }) {
+export default function MapView({ routes, startPoint, endPoint, selectedRouteId, setSelectedRouteId, userCoords }) {
   const defaultCenter = [22.7196, 75.8577]; // Indore
   const [mapLoading, setMapLoading] = useState(true);
 
@@ -218,6 +228,7 @@ export default function MapView({ routes, startPoint, endPoint, selectedRouteId,
           endPoint={endPoint} 
           routes={routes} 
           userCoords={userCoords} 
+          selectedRouteId={selectedRouteId}
           setMapLoading={setMapLoading}
         />
 
@@ -250,32 +261,43 @@ export default function MapView({ routes, startPoint, endPoint, selectedRouteId,
           </Marker>
         )}
 
-        {routes && routes.map((route) => (
-          <Polyline
-            key={route.id}
-            positions={route.coordinates}
-            pathOptions={{
-              color: route.color,
-              weight: route.weight || 5,
-              opacity: selectedRouteId === route.id 
-                ? 1.0 : 0.7,
-              dashArray: route.type === 'risky' 
-                ? '10 5'    // Dashed for risky
-                : route.type === 'moderate'
-                ? '15 5'    // Semi-dashed moderate
-                : null,     // Solid for safe
-              lineCap: 'round',
-              lineJoin: 'round'
-            }}
-          >
-            <Popup className="dark-popup">
-              <div className="font-sans">
-                <b style={{ color: route.color || '#00C896' }}>Safety: {route.score}/100</b><br/>
-                {route.dist} · ~{route.time}
-              </div>
-            </Popup>
-          </Polyline>
-        ))}
+        {routes && routes.map((route) => {
+          const isSelected = selectedRouteId === route.id;
+          const allSelected = selectedRouteId === null;
+
+          return (
+            <Polyline
+              key={route.id}
+              positions={route.coordinates}
+              pathOptions={{
+                color: route.color,
+                weight: isSelected ? 8 : (route.weight || 5),
+                opacity: allSelected 
+                  ? 0.8           // All visible
+                  : isSelected 
+                  ? 1.0           // Selected = full
+                  : 0.08,         // Others = nearly hidden
+                dashArray: route.type === 'risky' 
+                  ? '10 6'    // Dashed for risky
+                  : route.type === 'moderate'
+                  ? '15 5'    // Semi-dashed moderate
+                  : null,     // Solid for safe
+                lineCap: 'round',
+                lineJoin: 'round'
+              }}
+              eventHandlers={{
+                click: () => setSelectedRouteId(route.id)
+              }}
+            >
+              <Popup className="dark-popup">
+                <div className="font-sans">
+                  <b style={{ color: route.color || '#00C896' }}>Safety: {route.score}/100</b><br/>
+                  {route.dist} · ~{route.time}
+                </div>
+              </Popup>
+            </Polyline>
+          );
+        })}
       </MapContainer>
 
       <div 
