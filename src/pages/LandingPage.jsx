@@ -170,7 +170,7 @@ export default function LandingPage() {
 
       {showSOS && (
         <SOSModal 
-          isOpen={showSOS}
+          isOpen={true}
           onClose={() => setShowSOS(false)} 
         />
       )}
