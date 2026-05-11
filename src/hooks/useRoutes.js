@@ -176,16 +176,26 @@ export function useRoutes() {
         const r0 = toLatLng(
           data.routes[0].geometry.coordinates
         )
-        const r1 = data.routes[1] 
-          ? toLatLng(
-              data.routes[1].geometry.coordinates
-            )
-          : r0  // fallback to same route
-        const r2 = data.routes[2]
-          ? toLatLng(
-              data.routes[2].geometry.coordinates
-            )
-          : r0  // fallback to same route
+        
+        const moderateCoords = r0;
+        const safeCoords = data.routes[1] 
+          ? toLatLng(data.routes[1].geometry.coordinates)
+          : r0;
+          
+        const riskyCoords = data.routes[2]
+          ? toLatLng(data.routes[2].geometry.coordinates)
+          : r0.map(([lat, lng], i, arr) => {
+              // Only offset MIDDLE points
+              // Keep start and end same
+              if (i === 0 || i === arr.length-1) {
+                return [lat, lng]
+              }
+              // Simple fixed offset south-west
+              return [lat - 0.008, lng - 0.006]
+            });
+            
+        console.log('Safe first point:', safeCoords[0])
+        console.log('Risky first point:', riskyCoords[0])
         
         const d0 = data.routes[0].distance
         const t0 = data.routes[0].duration
@@ -198,7 +208,7 @@ export function useRoutes() {
             color: '#00C896',
             weight: 6,
             dashArray: null,
-            coordinates: r1,
+            coordinates: safeCoords,
             score: Math.max(0, 85 - penalty),
             distance: (d0*1.1/1000).toFixed(1),
             duration: Math.round(t0*1.15/60),
@@ -228,7 +238,7 @@ export function useRoutes() {
             color: '#F59E0B',
             weight: 5,
             dashArray: '10 6',
-            coordinates: r0,
+            coordinates: moderateCoords,
             score: Math.max(0, 65 - penalty),
             distance: (d0/1000).toFixed(1),
             duration: Math.round(t0/60),
@@ -258,7 +268,7 @@ export function useRoutes() {
             color: '#FF6B6B',
             weight: 4,
             dashArray: '6 8',
-            coordinates: r2,
+            coordinates: riskyCoords,
             score: Math.max(0, 35 - penalty),
             distance: (d0*0.9/1000).toFixed(1),
             duration: Math.round(t0*0.85/60),
