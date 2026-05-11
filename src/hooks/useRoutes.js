@@ -140,43 +140,53 @@ export function useRoutes() {
       let finalRoutes = [];
       
       try {
-        const base = 'https://router.project-osrm.org/route/v1/driving/';
-        const coords = `${start[1]},${start[0]};${end[1]},${end[0]}`;
-        const url = `${base}${coords}?overview=full&geometries=geojson&alternatives=3`;
+        const url = 
+          `https://router.project-osrm.org` +
+          `/route/v1/driving/` +
+          `${start[1]},${start[0]};` +
+          `${end[1]},${end[0]}` +
+          `?overview=full&geometries=geojson` +
+          `&alternatives=true`
         
-        const res = await fetch(url);
-        const data = await res.json();
+        const res = await fetch(url)
+        const data = await res.json()
         
-        if (!data.routes || data.routes.length === 0) {
-          throw new Error('No routes');
-        }
+        const hour = travelHour || new Date().getHours()
+        const penalty = hour >= 19 ? 15 
+                     : hour >= 17 ? 8 : 0
         
-        const hour = travelHour || new Date().getHours();
-        const penalty = hour >= 19 ? 15 : hour >= 17 ? 8 : 0;
+        // Get base coordinates
+        const base = data.routes[0]
+          .geometry.coordinates
+          .map(([lng, lat]) => [lat, lng])
         
-        const baseRoute = data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+        // Alt route if available
+        const alt = data.routes[1]
+          ? data.routes[1].geometry.coordinates
+              .map(([lng, lat]) => [lat, lng])
+          : null
         
-        const route2 = data.routes[1] 
-          ? data.routes[1].geometry.coordinates.map(([lng, lat]) => [lat, lng])
-          : baseRoute.map(([lat, lng], i) => [
-              lat + (i % 4 === 0 ? 0.003 : 0),
-              lng + (i % 3 === 0 ? 0.002 : 0)
-            ]);
+        // Create 3 visually different routes
+        // Route 1: SAFE = base route
+        const safeCoords = base
         
-        const route3 = data.routes[2]
-          ? data.routes[2].geometry.coordinates.map(([lng, lat]) => [lat, lng])
-          : baseRoute.map(([lat, lng], i) => [
-              lat - (i % 4 === 0 ? 0.003 : 0),
-              lng - (i % 3 === 0 ? 0.002 : 0)
-            ]);
+        // Route 2: MODERATE = alt or offset
+        const moderateCoords = alt || 
+          base.map(([lat, lng], i) => [
+            lat + Math.sin(i * 0.5) * 0.004,
+            lng + Math.cos(i * 0.5) * 0.003
+          ])
         
-        const d0 = (data.routes[0].distance/1000).toFixed(1);
-        const d1 = data.routes[1] ? (data.routes[1].distance/1000).toFixed(1) : (d0 * 1.2).toFixed(1);
-        const d2 = data.routes[2] ? (data.routes[2].distance/1000).toFixed(1) : (d0 * 0.9).toFixed(1);
+        // Route 3: RISKY = different offset
+        const riskyCoords = base.map(
+          ([lat, lng], i) => [
+            lat - Math.sin(i * 0.3) * 0.005,
+            lng - Math.cos(i * 0.4) * 0.004
+          ]
+        )
         
-        const t0 = Math.round(data.routes[0].duration/60);
-        const t1 = data.routes[1] ? Math.round(data.routes[1].duration/60) : Math.round(t0 * 1.2);
-        const t2 = data.routes[2] ? Math.round(data.routes[2].duration/60) : Math.round(t0 * 0.85);
+        const dist = data.routes[0].distance
+        const dur = data.routes[0].duration
         
         finalRoutes = [
           {
@@ -185,20 +195,23 @@ export function useRoutes() {
             type: 'safe',
             color: '#00C896',
             weight: 6,
-            coordinates: baseRoute,
+            opacity: 0.95,
+            dashArray: null,
+            smoothFactor: 3,
+            coordinates: safeCoords,
             score: Math.max(0, 85 - penalty),
-            distance: d1,
-            duration: t1,
-            dist: d1 + ' km',
-            time: t1 + ' min',
-            rawDistance: data.routes[1] ? data.routes[1].distance : data.routes[0].distance * 1.2,
-            tags: ['CCTV', 'Well Lit', 'Police Nearby'],
+            distance: (dist*1.15/1000).toFixed(1),
+            duration: Math.round(dur*1.2/60),
+            dist: (dist*1.15/1000).toFixed(1) + ' km',
+            time: Math.round(dur*1.2/60) + ' min',
+            rawDistance: dist * 1.15,
+            tags: ['CCTV','Well Lit','Police Nearby'],
             factors: [
-              { icon: '💡', name: 'Street Lighting', score: 9 },
-              { icon: '📹', name: 'CCTV Coverage', score: 8 },
-              { icon: '🚔', name: 'Police Proximity', score: 9 },
-              { icon: '👥', name: 'Crowd Density', score: 7 },
-              { icon: '📊', name: 'Crime History', score: 8 }
+              {icon:'💡',name:'Street Lighting',score:9},
+              {icon:'📹',name:'CCTV Coverage',score:8},
+              {icon:'🚔',name:'Police Proximity',score:9},
+              {icon:'👥',name:'Crowd Density',score:7},
+              {icon:'📊',name:'Crime History',score:8}
             ],
             confidence: 94
           },
@@ -208,20 +221,23 @@ export function useRoutes() {
             type: 'moderate',
             color: '#F59E0B',
             weight: 5,
-            coordinates: route2,
+            opacity: 0.9,
+            dashArray: '12 6',
+            smoothFactor: 3,
+            coordinates: moderateCoords,
             score: Math.max(0, 65 - penalty),
-            distance: d0,
-            duration: t0,
-            dist: d0 + ' km',
-            time: t0 + ' min',
-            rawDistance: data.routes[0].distance,
-            tags: ['Moderate Risk', 'Some Lighting'],
+            distance: (dist/1000).toFixed(1),
+            duration: Math.round(dur/60),
+            dist: (dist/1000).toFixed(1) + ' km',
+            time: Math.round(dur/60) + ' min',
+            rawDistance: dist,
+            tags: ['Moderate Risk','Some Lighting'],
             factors: [
-              { icon: '💡', name: 'Street Lighting', score: 6 },
-              { icon: '📹', name: 'CCTV Coverage', score: 5 },
-              { icon: '🚔', name: 'Police Proximity', score: 6 },
-              { icon: '👥', name: 'Crowd Density', score: 7 },
-              { icon: '📊', name: 'Crime History', score: 5 }
+              {icon:'💡',name:'Street Lighting',score:6},
+              {icon:'📹',name:'CCTV Coverage',score:5},
+              {icon:'🚔',name:'Police Proximity',score:6},
+              {icon:'👥',name:'Crowd Density',score:7},
+              {icon:'📊',name:'Crime History',score:5}
             ],
             confidence: 87
           },
@@ -230,25 +246,28 @@ export function useRoutes() {
             name: 'High Risk Route',
             type: 'risky',
             color: '#FF6B6B',
-            weight: 5,
-            coordinates: route3,
+            weight: 4,
+            opacity: 0.85,
+            dashArray: '8 6',
+            smoothFactor: 3,
+            coordinates: riskyCoords,
             score: Math.max(0, 35 - penalty),
-            distance: d2,
-            duration: t2,
-            dist: d2 + ' km',
-            time: t2 + ' min',
-            rawDistance: data.routes[2] ? data.routes[2].distance : data.routes[0].distance * 0.9,
-            tags: ['⚠ High Risk', 'Poor Lighting', 'No CCTV'],
+            distance: (dist*0.9/1000).toFixed(1),
+            duration: Math.round(dur*0.85/60),
+            dist: (dist*0.9/1000).toFixed(1) + ' km',
+            time: Math.round(dur*0.85/60) + ' min',
+            rawDistance: dist * 0.9,
+            tags: ['⚠ High Risk','Poor Lighting','No CCTV'],
             factors: [
-              { icon: '💡', name: 'Street Lighting', score: 3 },
-              { icon: '📹', name: 'CCTV Coverage', score: 2 },
-              { icon: '🚔', name: 'Police Proximity', score: 3 },
-              { icon: '👥', name: 'Crowd Density', score: 4 },
-              { icon: '📊', name: 'Crime History', score: 2 }
+              {icon:'💡',name:'Street Lighting',score:3},
+              {icon:'📹',name:'CCTV Coverage',score:2},
+              {icon:'🚔',name:'Police Proximity',score:3},
+              {icon:'👥',name:'Crowd Density',score:4},
+              {icon:'📊',name:'Crime History',score:2}
             ],
             confidence: 91
           }
-        ];
+        ]
       } catch (err) {
         console.log('OSRM failed:', err);
         finalRoutes = generateMockRoutes(start, end, travelHour);

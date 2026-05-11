@@ -167,22 +167,14 @@ const MapView = ({
             key={route.id}
             positions={route.coordinates || []}
             pathOptions={{
-              color: route.type === 'risky' ? '#FF6B6B' : route.type === 'moderate' ? '#F59E0B' : '#00C896',
-              weight: isSelected ? 8 : (route.type === 'risky' ? 5 : route.type === 'moderate' ? 5 : 6),
-              opacity: noneSelected
-                ? (route.type === 'risky' ? 0.8 : route.type === 'moderate' ? 0.85 : 0.9)
-                : isSelected
-                ? 1.0
-                : 0.15,
-              smoothFactor: 2,
+              color: route.color,
+              weight: isSelected ? 8 : route.weight,
+              opacity: noneSelected ? route.opacity
+                     : isSelected ? 1.0 : 0.15,
+              dashArray: route.dashArray,
+              smoothFactor: route.smoothFactor || 3,
               lineCap: 'round',
-              lineJoin: 'round',
-              dashArray: 
-                route.type === 'risky'
-                  ? '8 5'
-                  : route.type === 'moderate'
-                  ? '12 6'
-                  : null
+              lineJoin: 'round'
             }}
             eventHandlers={{
               click: () => {
