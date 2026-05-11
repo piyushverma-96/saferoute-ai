@@ -202,7 +202,7 @@ export default function MapView({ routes, startPoint, endPoint, selectedRouteId,
         doubleClickZoom={true}
       >
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           attribution='© OpenStreetMap © CARTO'
           maxZoom={19}
           minZoom={5}

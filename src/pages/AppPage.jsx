@@ -10,9 +10,8 @@ export default function AppPage() {
   const [endQuery, setEndQuery] = useState('');
   const [travelHour, setTravelHour] = useState(new Date().getHours());
   const [selectedRouteId, setSelectedRouteId] = useState(null);
-  
   const [userCoords, setUserCoords] = useState(null);
-  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [isDetectingLocation, setIsDetectingLocation] = useState(true);
   const [locationError, setLocationError] = useState('');
   const [gpsAccuracy, setGpsAccuracy] = useState(null);
 
