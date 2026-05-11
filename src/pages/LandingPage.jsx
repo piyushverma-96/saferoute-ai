@@ -77,6 +77,7 @@ export default function LandingPage() {
           </div>
           <div 
             onClick={() => setShowSOS(true)}
+            style={{ cursor: 'pointer' }}
             className="flex flex-col items-center justify-center text-center p-4 rounded-xl border border-transparent hover:border-[#7C3AED] hover:scale-[1.02] transition-all duration-200 cursor-pointer"
           >
             <AlertTriangle className="text-brand-danger mb-2" size={28} />
@@ -170,6 +171,7 @@ export default function LandingPage() {
 
       {showSOS && (
         <SOSModal 
+          isOpen={true}
           onClose={() => setShowSOS(false)} 
         />
       )}
