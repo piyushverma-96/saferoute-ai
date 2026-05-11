@@ -9,7 +9,7 @@ export default function AppPage() {
   const [startQuery, setStartQuery] = useState('');
   const [endQuery, setEndQuery] = useState('');
   const [travelHour, setTravelHour] = useState(new Date().getHours());
-  const [selectedRouteId, setSelectedRouteId] = useState(null);
+  const [selectedRoute, setSelectedRoute] = useState(null);
   const [userCoords, setUserCoords] = useState(null);
   const [isDetectingLocation, setIsDetectingLocation] = useState(true);
   const [locationError, setLocationError] = useState('');
@@ -110,12 +110,12 @@ export default function AppPage() {
   const handleSearch = (start = startQuery, end = endQuery, hour = travelHour) => {
     if (!start || !end) return;
     fetchRoutes(start, end, hour);
-    setSelectedRouteId(null);
+    setSelectedRoute(null);
   };
 
   useEffect(() => {
     if (routes && routes.length > 0) {
-      setSelectedRouteId(routes[0].id);
+      setSelectedRoute(routes[0]);
     }
   }, [routes]);
 
@@ -157,8 +157,8 @@ export default function AppPage() {
         routes={routes}
         isLoading={isLoading}
         error={error}
-        selectedRouteId={selectedRouteId}
-        setSelectedRouteId={setSelectedRouteId}
+        selectedRoute={selectedRoute}
+        setSelectedRoute={setSelectedRoute}
         userCoords={userCoords}
         isDetectingLocation={isDetectingLocation}
         locationError={locationError}
@@ -172,8 +172,8 @@ export default function AppPage() {
           routes={routes} 
           startPoint={startPoint} 
           endPoint={endPoint} 
-          selectedRouteId={selectedRouteId}
-          setSelectedRouteId={setSelectedRouteId}
+          selectedRoute={selectedRoute}
+          setSelectedRoute={setSelectedRoute}
           userCoords={userCoords}
         />
       </div>

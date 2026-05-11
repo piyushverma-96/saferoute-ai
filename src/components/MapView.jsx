@@ -125,9 +125,8 @@ function MapUpdater({ startPoint, endPoint, routes, userCoords, setMapLoading })
   }, [map, setMapLoading]);
 
   useEffect(() => {
-    if (routes && routes.length > 0 && selectedRouteId) {
-      const selectedRoute = routes.find(r => r.id === selectedRouteId);
-      if (selectedRoute && selectedRoute.coordinates && selectedRoute.coordinates.length > 0) {
+    if (routes && routes.length > 0 && selectedRoute) {
+      if (selectedRoute.coordinates && selectedRoute.coordinates.length > 0) {
         const bounds = L.latLngBounds(selectedRoute.coordinates);
         map.flyToBounds(bounds, {
           padding: [80, 80],
@@ -161,12 +160,12 @@ function MapUpdater({ startPoint, endPoint, routes, userCoords, setMapLoading })
     } else if (startPoint) {
       map.setView([startPoint.lat, startPoint.lon], 13);
     }
-  }, [map, startPoint, endPoint, routes, userCoords, selectedRouteId]);
+  }, [map, startPoint, endPoint, routes, userCoords, selectedRoute]);
 
   return null;
 }
 
-export default function MapView({ routes, startPoint, endPoint, selectedRouteId, setSelectedRouteId, userCoords }) {
+export default function MapView({ routes, startPoint, endPoint, selectedRoute, setSelectedRoute, userCoords }) {
   const defaultCenter = [22.7196, 75.8577]; // Indore
   const [mapLoading, setMapLoading] = useState(true);
 
@@ -228,7 +227,7 @@ export default function MapView({ routes, startPoint, endPoint, selectedRouteId,
           endPoint={endPoint} 
           routes={routes} 
           userCoords={userCoords} 
-          selectedRouteId={selectedRouteId}
+          selectedRoute={selectedRoute}
           setMapLoading={setMapLoading}
         />
 
@@ -262,8 +261,8 @@ export default function MapView({ routes, startPoint, endPoint, selectedRouteId,
         )}
 
         {routes && routes.map((route) => {
-          const isSelected = selectedRouteId === route.id;
-          const allSelected = selectedRouteId === null;
+          const isSelected = selectedRoute?.id === route.id;
+          const noneSelected = selectedRoute === null || selectedRoute === undefined;
 
           return (
             <Polyline
@@ -272,21 +271,21 @@ export default function MapView({ routes, startPoint, endPoint, selectedRouteId,
               pathOptions={{
                 color: route.color,
                 weight: isSelected ? 8 : (route.weight || 5),
-                opacity: allSelected 
-                  ? 0.8           // All visible
+                opacity: noneSelected 
+                  ? 0.8
                   : isSelected 
-                  ? 1.0           // Selected = full
-                  : 0.08,         // Others = nearly hidden
+                  ? 1.0 
+                  : 0.15,
                 dashArray: route.type === 'risky' 
-                  ? '10 6'    // Dashed for risky
+                  ? '10 6'
                   : route.type === 'moderate'
-                  ? '15 5'    // Semi-dashed moderate
-                  : null,     // Solid for safe
+                  ? '15 5'
+                  : null,
                 lineCap: 'round',
                 lineJoin: 'round'
               }}
               eventHandlers={{
-                click: () => setSelectedRouteId(route.id)
+                click: () => setSelectedRoute && setSelectedRoute(route)
               }}
             >
               <Popup className="dark-popup">

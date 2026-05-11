@@ -16,8 +16,8 @@ export default function Sidebar({
   routes, 
   isLoading, 
   error,
-  selectedRouteId,
-  setSelectedRouteId,
+  selectedRoute,
+  setSelectedRoute,
   userCoords,
   isDetectingLocation,
   locationError,
@@ -83,8 +83,8 @@ export default function Sidebar({
 
   // Voice announcement when route is selected
   useEffect(() => {
-    if (routes && routes.length > 0 && selectedRouteId !== null) {
-      const route = routes.find(r => r.id === selectedRouteId);
+    if (routes && routes.length > 0 && selectedRoute !== null) {
+      const route = selectedRoute;
       if (route) {
         const riskLevel = route.score >= 70 ? 'Safe' : route.score >= 40 ? 'Moderate risk' : 'High risk';
         const riskLevelHi = route.score >= 70 ? 'सुरक्षित' : route.score >= 40 ? 'मध्यम जोखिम वाला' : 'उच्च जोखिम वाला';
@@ -95,13 +95,13 @@ export default function Sidebar({
         );
       }
     }
-  }, [selectedRouteId, routes, speak]);
+  }, [selectedRoute, routes, speak]);
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (startQuery && endQuery) {
       onSearch(startQuery, endQuery, travelHour);
-      setSelectedRouteId(0); // Select first route by default
+      setSelectedRoute(null); // Select first route by default
     }
   };
 
@@ -346,8 +346,8 @@ export default function Sidebar({
               <RouteCard 
                 key={route.id} 
                 route={route} 
-                selected={selectedRouteId === route.id}
-                onSelect={(r) => setSelectedRouteId(r.id)}
+                selected={selectedRoute?.id === route.id}
+                onSelect={(r) => setSelectedRoute(r)}
                 travelTime={travelHour >= 19 || travelHour < 6 ? 'night' : travelHour >= 17 ? 'evening' : 'day'}
               />
             ))
