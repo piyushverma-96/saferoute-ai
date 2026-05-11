@@ -112,7 +112,10 @@ export default function Sidebar({
   ];
 
   return (
-    <div className="w-full lg:w-[320px] shrink-0 bg-brand-surface border-r border-brand-border h-[calc(100vh-64px)] flex flex-col z-20">
+    <div 
+      className="sidebar w-full lg:w-[320px] shrink-0 border-r border-brand-border h-[calc(100vh-64px)] flex flex-col z-20"
+      style={{ background: 'rgba(15, 15, 30, 0.95)', backdropFilter: 'blur(10px)' }}
+    >
       
       {/* Input Form Area */}
       <div className="p-5 border-b border-brand-border shrink-0">
@@ -188,23 +191,52 @@ export default function Sidebar({
           </div>
 
           <div>
-            <label className="label-text flex items-center gap-1 mb-2">
-              <Clock size={12} /> Time of Travel
-            </label>
-            <div className="grid grid-cols-3 gap-2">
+            <p style={{
+              color: '#888',
+              fontSize: '11px',
+              marginTop: '12px',
+              marginBottom: '4px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px'
+            }}>
+              ⏰ Time of Travel
+            </p>
+            <div style={{
+              display: 'flex',
+              gap: '8px',
+              width: '100%',
+              marginTop: '12px'
+            }}>
               {timeOptions.map((opt) => (
                 <button
                   key={opt.label}
                   type="button"
                   onClick={() => setTravelHour(opt.value)}
-                  className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg border text-xs font-medium transition-all ${
-                    travelHour === opt.value
-                      ? 'border-brand-purple bg-brand-purple/10 text-brand-purple'
-                      : 'border-brand-border bg-brand-bg text-brand-text-secondary hover:border-brand-text-muted'
-                  }`}
+                  style={{
+                    flex: 1,
+                    padding: '10px 4px',
+                    borderRadius: '10px',
+                    border: travelHour === opt.value 
+                      ? '2px solid #7C3AED'
+                      : '1px solid rgba(255,255,255,0.1)',
+                    background: travelHour === opt.value
+                      ? 'rgba(124,58,237,0.2)'
+                      : 'rgba(255,255,255,0.05)',
+                    color: 'white',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '11px',
+                    minWidth: '0',
+                    whiteSpace: 'nowrap'
+                  }}
                 >
-                  {opt.icon}
-                  <span className="mt-1">{opt.label}</span>
+                  <span style={{fontSize: '18px'}}>
+                    {opt.label === 'Morning' ? '☀️' : opt.label === 'Evening' ? '🌆' : '🌙'}
+                  </span>
+                  <span>{opt.label}</span>
                 </button>
               ))}
             </div>
@@ -285,7 +317,24 @@ export default function Sidebar({
           </div>
         )}
 
-        <div className="space-y-4">
+        {routes.length > 0 && (
+          <p style={{
+            color: '#888',
+            fontSize: '11px',
+            marginBottom: '8px'
+          }}>
+            {routes.length} routes found • Scroll to see all
+          </p>
+        )}
+        <div style={{
+          overflowY: 'auto',
+          maxHeight: window.innerWidth < 768 
+            ? '45vh'   
+            : '60vh',  
+          paddingRight: '4px',
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#7C3AED transparent'
+        }}>
           {isLoading ? (
             <>
               <SkeletonCard />
@@ -297,9 +346,9 @@ export default function Sidebar({
               <RouteCard 
                 key={route.id} 
                 route={route} 
-                isSelected={selectedRouteId === route.id}
-                onClick={() => setSelectedRouteId(route.id)}
-                travelHour={travelHour}
+                selected={selectedRouteId === route.id}
+                onSelect={(r) => setSelectedRouteId(r.id)}
+                travelTime={travelHour >= 19 || travelHour < 6 ? 'night' : travelHour >= 17 ? 'evening' : 'day'}
               />
             ))
           ) : (

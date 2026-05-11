@@ -1,176 +1,319 @@
 import React, { useState } from 'react';
-import { ShieldCheck, MapPin, Clock, Volume2, ChevronDown } from 'lucide-react';
-import SafetyMetrics from './SafetyMetrics';
-import { useVoiceNavigation } from '../hooks/useVoiceNavigation';
 
-export default function RouteCard({ route, isSelected, onClick, travelHour }) {
-  const { name, score, dist, time, color, tags, metrics } = route;
-  const { speak, isSupported, isVoiceEnabled } = useVoiceNavigation();
-  const [showBreakdown, setShowBreakdown] = useState(false);
-
-  const handleReplay = (e) => {
-    e.stopPropagation();
-    speak(
-      `${name}. ${dist}, ${time}, safety score ${score}.`,
-      `${name === 'Safest Route' ? 'सबसे सुरक्षित रास्ता' : name === 'Fastest Route' ? 'सबसे तेज़ रास्ता' : 'संतुलित रास्ता'}। ${dist}, ${time}, सुरक्षा स्कोर ${score}।`
-    );
-  };
-
-  const confidence = score >= 70 ? 94 : score >= 40 ? 87 : 91;
-
-  const safeFactors = [
-    { icon: '💡', name: 'Street Lighting', score: 9 },
-    { icon: '📹', name: 'CCTV Coverage', score: 8 },
-    { icon: '🚔', name: 'Police Proximity', score: 9 },
-    { icon: '👥', name: 'Crowd Density', score: 7 },
-    { icon: '📊', name: 'Crime History', score: 8 },
-  ];
-  const moderateFactors = [
-    { icon: '💡', name: 'Street Lighting', score: 6 },
-    { icon: '📹', name: 'CCTV Coverage', score: 5 },
-    { icon: '🚔', name: 'Police Proximity', score: 6 },
-    { icon: '👥', name: 'Crowd Density', score: 7 },
-    { icon: '📊', name: 'Crime History', score: 5 },
-  ];
-  const riskyFactors = [
-    { icon: '💡', name: 'Street Lighting', score: 3 },
-    { icon: '📹', name: 'CCTV Coverage', score: 2 },
-    { icon: '🚔', name: 'Police Proximity', score: 3 },
-    { icon: '👥', name: 'Crowd Density', score: 4 },
-    { icon: '📊', name: 'Crime History', score: 2 },
-  ];
-
-  const factors = score >= 70 ? safeFactors : score >= 40 ? moderateFactors : riskyFactors;
-  const isNight = travelHour >= 19 || travelHour < 5;
-  const isEvening = travelHour >= 17 && travelHour < 19;
-
+const RouteCard = ({ route, selected, onSelect, travelTime }) => {
+  const [showAI, setShowAI] = useState(false)
+  
   return (
-    <div 
-      className={`card-container cursor-pointer p-4 card-hover overflow-hidden transition-all duration-300 ${
-        isSelected ? 'border-glow bg-brand-surface' : ''
-      }`}
-      onClick={onClick}
+    <div
+      onClick={() => onSelect(route)}
+      style={{
+        background: selected 
+          ? 'rgba(124,58,237,0.15)' 
+          : 'rgba(255,255,255,0.05)',
+        border: selected
+          ? `2px solid ${route.color}`
+          : '1px solid rgba(255,255,255,0.1)',
+        borderRadius: '12px',
+        padding: '12px',
+        marginBottom: '10px',
+        cursor: 'pointer',
+        width: '100%',
+        boxSizing: 'border-box'
+      }}
     >
-      <div className="flex justify-between items-start mb-3">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <ShieldCheck size={18} style={{ color }} />
-            <h3 className="font-semibold text-brand-text-primary">{name}</h3>
-            {isSupported && isVoiceEnabled && (
-              <button 
-                onClick={handleReplay}
-                className="ml-2 text-brand-text-muted hover:text-brand-purple transition-colors p-1"
-                title="Replay Route Details"
-              >
-                <Volume2 size={14} />
-              </button>
-            )}
-          </div>
-          <div className="flex items-center gap-3 text-sm text-brand-text-secondary">
-            <span className="flex items-center gap-1"><MapPin size={14} /> {dist}</span>
-            <span className="flex items-center gap-1"><Clock size={14} /> {time}</span>
-          </div>
-        </div>
-        
-        <div className="flex flex-col items-center">
-          <div 
-            className="flex flex-col items-center justify-center w-12 h-12 rounded-lg border bg-brand-bg font-bold text-lg"
-            style={{ borderColor: color, color: color }}
-          >
-            {score}
-          </div>
-          <span style={{ fontSize: '10px', color: '#888', display: 'block', marginTop: '4px' }}>
-            🤖 ML Confidence: {confidence}%
+      {/* HIGH RISK WARNING BANNER */}
+      {route.type === 'risky' && (
+        <div style={{
+          background: 'rgba(239,68,68,0.15)',
+          border: '1px solid rgba(239,68,68,0.4)',
+          borderRadius: '6px',
+          padding: '4px 8px',
+          marginBottom: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px'
+        }}>
+          <span style={{fontSize: '12px'}}>⚠️</span>
+          <span style={{
+            color: '#EF4444',
+            fontSize: '11px',
+            fontWeight: '600'
+          }}>
+            High Risk — Not Recommended
           </span>
         </div>
+      )}
+
+      {/* TOP ROW - Route name + Score */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '8px'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <div style={{
+            width: '12px',
+            height: '12px',
+            borderRadius: '50%',
+            background: route.color,
+            flexShrink: 0
+          }} />
+          <span style={{
+            color: 'white',
+            fontSize: '13px',
+            fontWeight: '600'
+          }}>
+            {route.name}
+          </span>
+        </div>
+        <span style={{
+          color: route.color,
+          fontSize: '20px',
+          fontWeight: 'bold'
+        }}>
+          {route.score}
+        </span>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-3">
-        {tags.map((tag, idx) => (
-          <span 
-            key={idx} 
-            className="px-2 py-1 text-[10px] uppercase tracking-wider rounded-full bg-brand-bg text-brand-text-secondary border border-brand-border"
+      {/* MIDDLE ROW - Distance + Time */}
+      <div style={{
+        display: 'flex',
+        gap: '12px',
+        marginBottom: '8px'
+      }}>
+        <span style={{
+          color: '#888',
+          fontSize: '12px'
+        }}>
+          📍 {route.distance}
+        </span>
+        <span style={{
+          color: '#888',
+          fontSize: '12px'
+        }}>
+          ⏱ {route.duration} min
+        </span>
+        <span style={{
+          color: '#555',
+          fontSize: '10px',
+          marginLeft: 'auto'
+        }}>
+          🤖 {route.confidence}%
+        </span>
+      </div>
+
+      {/* TAGS ROW */}
+      <div style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '4px',
+        marginBottom: '10px'
+      }}>
+        {route.tags?.map(tag => (
+          <span
+            key={tag}
+            style={{
+              background: 'rgba(255,255,255,0.08)',
+              color: '#aaa',
+              fontSize: '10px',
+              padding: '2px 8px',
+              borderRadius: '20px',
+              border: '1px solid rgba(255,255,255,0.1)'
+            }}
           >
             {tag}
           </span>
         ))}
       </div>
 
-      <button 
-        onClick={(e) => { e.stopPropagation(); setShowBreakdown(!showBreakdown); }}
-        className="flex items-center gap-1 text-[11px] text-brand-purple font-medium hover:text-brand-purple/80 transition-colors mt-2"
+      {/* AI ANALYSIS BUTTON 
+          - Always visible, large touch target */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          setShowAI(!showAI)
+        }}
+        style={{
+          width: '100%',
+          padding: '10px',
+          background: showAI
+            ? 'rgba(124,58,237,0.3)'
+            : 'rgba(124,58,237,0.1)',
+          border: '1px solid rgba(124,58,237,0.4)',
+          borderRadius: '8px',
+          color: '#A78BFA',
+          fontSize: '12px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '6px',
+          marginBottom: showAI ? '10px' : '0'
+        }}
       >
-        🤖 View AI Analysis
-        <ChevronDown size={14} className={`transition-transform duration-300 ${showBreakdown ? 'rotate-180' : ''}`} />
+        <span>🤖</span>
+        <span>
+          {showAI 
+            ? 'Hide AI Analysis ▲' 
+            : 'View AI Analysis ▼'}
+        </span>
       </button>
 
-      {/* AI Breakdown Panel */}
-      <div 
-        className={`transition-all duration-300 overflow-hidden ${showBreakdown ? 'max-h-[500px] mt-3 opacity-100' : 'max-h-0 opacity-0'}`}
-      >
+      {/* AI BREAKDOWN PANEL */}
+      {showAI && (
         <div style={{
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(139,92,246,0.2)',
-          borderRadius: '12px',
-          padding: '16px'
+          background: 'rgba(0,0,0,0.3)',
+          borderRadius: '10px',
+          padding: '12px',
+          border: '1px solid rgba(124,58,237,0.2)'
         }}>
-          <div className="flex justify-between items-center mb-4 border-b border-brand-border/50 pb-2">
-            <span className="font-semibold text-sm text-brand-text-primary">🤖 AI Score Breakdown</span>
-            <span style={{color: '#888', fontSize: '10px'}} className="uppercase tracking-wide">
-              Powered by ML Model
-            </span>
-          </div>
-          
-          <div className="space-y-3">
-            {factors.map((factor, idx) => (
-              <div key={idx} className="flex items-center text-xs">
-                <span className="w-6 text-center">{factor.icon}</span>
-                <span className="w-28" style={{color: '#A0A0B0', fontSize: '12px'}}>{factor.name}</span>
-                <div className="flex-1 mx-2 bg-white/10 h-[6px] rounded-full overflow-hidden relative">
-                  <div 
-                    className="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-out"
-                    style={{
-                      width: showBreakdown ? `${factor.score * 10}%` : '0%',
-                      background: factor.score >= 7 ? '#00C896' : factor.score >= 5 ? '#F59E0B' : '#EF4444',
-                      transitionDelay: `${idx * 100}ms`
-                    }}
-                  />
-                </div>
-                <span className="w-8 text-right font-medium text-brand-text-secondary">{factor.score}/10</span>
-              </div>
-            ))}
-          </div>
-          
-          {isNight && (
-            <div className="mt-4 text-xs font-medium text-brand-warning flex items-center gap-1 bg-brand-warning/10 p-2 rounded-lg border border-brand-warning/20">
-              🌙 Night Time Penalty: -15 pts
-            </div>
-          )}
-          {isEvening && !isNight && (
-            <div className="mt-4 text-xs font-medium text-brand-warning flex items-center gap-1 bg-brand-warning/10 p-2 rounded-lg border border-brand-warning/20">
-              🌆 Evening Penalty: -8 pts
-            </div>
-          )}
-          
-          <div className="my-4 border-t border-brand-border/50" />
-          
-          <div className="flex justify-between items-center mb-3">
-            <span className="text-sm font-medium text-brand-text-primary">🎯 Final Safety Score</span>
+          {/* Header */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginBottom: '12px'
+          }}>
             <span style={{
-              color: score >= 70 ? '#00C896' : score >= 40 ? '#F59E0B' : '#EF4444',
-              fontWeight: 'bold',
-              fontSize: '18px'
+              color: '#A78BFA',
+              fontSize: '12px',
+              fontWeight: '600'
             }}>
-              {score}/100
+              🤖 AI Score Breakdown
+            </span>
+            <span style={{
+              color: '#555',
+              fontSize: '10px'
+            }}>
+              Random Forest + KNN
             </span>
           </div>
-          
-          <div className="flex items-center gap-1 justify-center text-[10px] mt-2 pt-2 border-t border-brand-border/30">
-            <span className="text-brand-text-muted">⚡ Analyzed using</span>
-            <span style={{color: '#7C3AED', fontWeight: '500'}}>Random Forest + KNN Model</span>
+
+          {/* Factor bars */}
+          {route.factors?.map((factor, i) => (
+            <div
+              key={i}
+              style={{
+                marginBottom: '10px'
+              }}
+            >
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginBottom: '4px'
+              }}>
+                <span style={{
+                  color: '#aaa',
+                  fontSize: '11px'
+                }}>
+                  {factor.icon} {factor.name}
+                </span>
+                <span style={{
+                  color: factor.score >= 7 
+                    ? '#00C896'
+                    : factor.score >= 5
+                    ? '#F59E0B'
+                    : '#EF4444',
+                  fontSize: '11px',
+                  fontWeight: '600'
+                }}>
+                  {factor.score}/10
+                </span>
+              </div>
+              <div style={{
+                height: '6px',
+                background: 'rgba(255,255,255,0.1)',
+                borderRadius: '3px',
+                overflow: 'hidden'
+              }}>
+                <div style={{
+                  height: '100%',
+                  width: `${factor.score * 10}%`,
+                  background: factor.score >= 7
+                    ? '#00C896'
+                    : factor.score >= 5
+                    ? '#F59E0B'
+                    : '#EF4444',
+                  borderRadius: '3px',
+                  transition: 'width 0.8s ease-out'
+                }} />
+              </div>
+            </div>
+          ))}
+
+          {/* Night penalty */}
+          {(travelTime === 'night' || 
+            travelTime === 'evening') && (
+            <div style={{
+              background: 'rgba(239,68,68,0.1)',
+              border: '1px solid rgba(239,68,68,0.3)',
+              borderRadius: '6px',
+              padding: '6px 10px',
+              marginTop: '8px',
+              marginBottom: '8px'
+            }}>
+              <span style={{
+                color: '#EF4444',
+                fontSize: '11px'
+              }}>
+                {travelTime === 'night' 
+                  ? '🌙 Night Penalty: -15 pts'
+                  : '🌆 Evening Penalty: -8 pts'}
+              </span>
+            </div>
+          )}
+
+          {/* Divider */}
+          <div style={{
+            height: '1px',
+            background: 'rgba(255,255,255,0.1)',
+            margin: '10px 0'
+          }} />
+
+          {/* Final score */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <span style={{
+              color: '#aaa',
+              fontSize: '12px'
+            }}>
+              🎯 Final Safety Score
+            </span>
+            <span style={{
+              color: route.color,
+              fontSize: '20px',
+              fontWeight: 'bold'
+            }}>
+              {route.score}/100
+            </span>
+          </div>
+
+          {/* ML Badge */}
+          <div style={{
+            marginTop: '10px',
+            padding: '6px',
+            background: 'rgba(124,58,237,0.1)',
+            borderRadius: '6px',
+            textAlign: 'center'
+          }}>
+            <span style={{
+              color: '#7C3AED',
+              fontSize: '10px'
+            }}>
+              ⚡ Analyzed by ML Safety Model v2.1
+            </span>
           </div>
         </div>
-      </div>
+      )}
     </div>
-  );
+  )
 }
+
+export default RouteCard;

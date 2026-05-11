@@ -202,12 +202,10 @@ export default function MapView({ routes, startPoint, endPoint, selectedRouteId,
         doubleClickZoom={true}
       >
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          attribution="&copy; OpenStreetMap &copy; CARTO"
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          attribution='© OpenStreetMap © CARTO'
           maxZoom={19}
           minZoom={5}
-          tileSize={256}
-          zoomOffset={0}
           keepBuffer={4}
           updateWhenIdle={false}
           updateWhenZooming={false}
@@ -259,7 +257,7 @@ export default function MapView({ routes, startPoint, endPoint, selectedRouteId,
           const positions = route.geometry.coordinates.map(c => [c[1] + offset, c[0] + offset]);
           
           const isSelected = selectedRouteId === route.id;
-          const weight = isSelected ? 8 : 4;
+          const weight = isSelected ? 8 : 6;
           const opacity = isSelected ? 1.0 : (selectedRouteId !== null ? 0.4 : 0.85);
           const delay = i * 300; 
 
@@ -288,20 +286,23 @@ export default function MapView({ routes, startPoint, endPoint, selectedRouteId,
         })}
       </MapContainer>
 
-      <div className="absolute top-4 right-4 z-[900] bg-brand-surface/90 backdrop-blur border border-brand-border rounded-lg p-3 shadow-xl">
-        <h4 className="label-text mb-2">Legend</h4>
+      <div 
+        className="absolute top-4 right-4 z-[900] border border-brand-border rounded-lg p-3 shadow-xl"
+        style={{ background: 'rgba(0,0,0,0.8)', color: 'white' }}
+      >
+        <h4 className="uppercase tracking-[0.08em] text-[10px] md:text-[11px] font-medium mb-2 text-white/70">Legend</h4>
         <div className="space-y-2 text-xs">
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-[#00C896]"></span>
-            <span className="text-brand-text-secondary">Safe (70-100)</span>
+            <span>Safe (70-100)</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-[#F59E0B]"></span>
-            <span className="text-brand-text-secondary">Moderate (40-69)</span>
+            <span>Moderate (40-69)</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-[#EF4444]"></span>
-            <span className="text-brand-text-secondary">High Risk (0-39)</span>
+            <span>High Risk (0-39)</span>
           </div>
         </div>
       </div>
