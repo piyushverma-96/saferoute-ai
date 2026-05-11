@@ -250,40 +250,32 @@ export default function MapView({ routes, startPoint, endPoint, selectedRouteId,
           </Marker>
         )}
 
-        {routes && routes.map((route, i) => {
-          if (!route.geometry || !route.geometry.coordinates) return null;
-          
-          const offset = i === 1 ? 0.0002 : i === 2 ? -0.0002 : 0;
-          const positions = route.geometry.coordinates.map(c => [c[1] + offset, c[0] + offset]);
-          
-          const isSelected = selectedRouteId === route.id;
-          const weight = isSelected ? 8 : 6;
-          const opacity = isSelected ? 1.0 : (selectedRouteId !== null ? 0.4 : 0.85);
-          const delay = i * 300; 
-
-          return (
-            <AnimatedPolyline
-              key={route.id}
-              positions={positions}
-              delay={delay}
-              isSelected={isSelected}
-              pathOptions={{
-                color: route.color || (i === 0 ? '#00C896' : i === 1 ? '#F59E0B' : '#EF4444'),
-                weight: weight,
-                opacity: opacity,
-                lineJoin: 'round',
-                lineCap: 'round',
-                className: isSelected ? 'route-selected' : 'route-unselected'
-              }}
-              popupContent={
-                <>
-                  <b style={{ color: route.color || '#00C896' }}>Safety: {route.score}/100</b><br/>
-                  {route.dist} · ~{route.time}
-                </>
-              }
-            />
-          );
-        })}
+        {routes && routes.map((route) => (
+          <Polyline
+            key={route.id}
+            positions={route.coordinates}
+            pathOptions={{
+              color: route.color,
+              weight: route.weight || 5,
+              opacity: selectedRouteId === route.id 
+                ? 1.0 : 0.7,
+              dashArray: route.type === 'risky' 
+                ? '10 5'    // Dashed for risky
+                : route.type === 'moderate'
+                ? '15 5'    // Semi-dashed moderate
+                : null,     // Solid for safe
+              lineCap: 'round',
+              lineJoin: 'round'
+            }}
+          >
+            <Popup className="dark-popup">
+              <div className="font-sans">
+                <b style={{ color: route.color || '#00C896' }}>Safety: {route.score}/100</b><br/>
+                {route.dist} · ~{route.time}
+              </div>
+            </Popup>
+          </Polyline>
+        ))}
       </MapContainer>
 
       <div 
