@@ -267,18 +267,6 @@ export default function Sidebar({
                 >
                   {language === 'hi-IN' ? '🇮🇳 Hindi' : '🇬🇧 English'}
                 </button>
-                {/* Debug Button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const voices = window.speechSynthesis.getVoices();
-                    console.log('Voices found:', voices.map(v => `${v.name} (${v.lang})`));
-                    alert(`${voices.length} voices found. Check console for details.`);
-                  }}
-                  className="px-2 rounded-xl border border-brand-border bg-brand-surface text-[10px] text-brand-text-muted hover:text-brand-purple transition-all"
-                >
-                  Debug Voices
-                </button>
               </>
             )}
           </div>
