@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import MapView from '../components/MapView';
-import Navbar from '../components/Navbar';
 import { useRoutes } from '../hooks/useRoutes';
 import { useVoiceNavigation } from '../hooks/useVoiceNavigation';
 
@@ -163,11 +162,6 @@ export default function AppPage() {
       overflow: 'hidden',
       background: '#0A0A0F'
     }}>
-      
-      {/* NAVBAR - fixed top */}
-      <div style={{ position: 'relative', zIndex: 50 }}>
-        <Navbar />
-      </div>
       
       {/* NIGHT BANNER */}
       {isNightTime && (
