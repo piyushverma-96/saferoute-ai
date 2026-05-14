@@ -1,56 +1,63 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useRef, useState, useEffect } from 'react'
 
 const useVoiceNavigation = () => {
   const [isVoiceOn, setIsVoiceOn] = useState(true)
-  const [language, setLanguage] = useState('en')
-  const synthRef = useRef(window.speechSynthesis)
+  const [language, setLanguage] = useState('hi-IN') // Default to Hindi as per user preference
+  
+  // Robust voice finding logic
+  const getVoice = (lang) => {
+    const voices = window.speechSynthesis.getVoices()
+    
+    if (lang === 'hi-IN') {
+      return voices.find(v => 
+        v.lang === 'hi-IN' || 
+        v.lang === 'hi' ||
+        v.name.toLowerCase().includes('hindi') ||
+        v.name.toLowerCase().includes('google hindi')
+      )
+    } else {
+      return voices.find(v =>
+        v.lang.includes('en-IN') ||
+        v.lang.includes('en-GB') ||
+        v.lang.includes('en-US') ||
+        v.lang.includes('en')
+      )
+    }
+  }
 
-  const speak = useCallback((text) => {
+  const speak = useCallback((text, langOverride) => {
     if (!isVoiceOn) return
     if (!window.speechSynthesis) {
       console.log('Speech not supported')
       return
     }
     
+    const targetLang = langOverride || language
+    
     // Cancel any ongoing speech
     window.speechSynthesis.cancel()
     
-    // Small delay needed for mobile Chrome
-    setTimeout(() => {
-      const utterance = new SpeechSynthesisUtterance(text)
-      
-      utterance.lang = language === 'hi' ? 'hi-IN' : 'en-IN'
-      utterance.rate = 0.9
-      utterance.pitch = 1.0
-      utterance.volume = 1.0
-      
-      // Get available voices
-      const voices = window.speechSynthesis.getVoices()
-      
-      if (language === 'hi') {
-        const hindiVoice = voices.find(v => 
-          v.lang.includes('hi')
-        )
-        if (hindiVoice) {
-          utterance.voice = hindiVoice
-        }
-      } else {
-        const englishVoice = voices.find(v =>
-          v.lang.includes('en-IN') ||
-          v.lang.includes('en-GB') ||
-          v.lang.includes('en')
-        )
-        if (englishVoice) {
-          utterance.voice = englishVoice
-        }
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = targetLang
+    utterance.rate = 0.9
+    utterance.pitch = 1.0
+    utterance.volume = 1.0
+    
+    const voice = getVoice(targetLang)
+    if (voice) {
+      utterance.voice = voice
+    }
+    
+    // Handle late-loading voices
+    if (window.speechSynthesis.getVoices().length === 0) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        const v = getVoice(targetLang)
+        if (v) utterance.voice = v
+        window.speechSynthesis.speak(utterance)
       }
-      
-      utterance.onerror = (e) => {
-        console.log('Speech error:', e)
-      }
-      
+    } else {
       window.speechSynthesis.speak(utterance)
-    }, 100)
+    }
     
   }, [isVoiceOn, language])
 
@@ -65,7 +72,7 @@ const useVoiceNavigation = () => {
 
   const toggleLanguage = useCallback(() => {
     setLanguage(prev => 
-      prev === 'en' ? 'hi' : 'en'
+      prev === 'hi-IN' ? 'en-IN' : 'hi-IN'
     )
   }, [])
 
@@ -78,8 +85,8 @@ const useVoiceNavigation = () => {
     toggleLanguage,
     isVoiceOn,
     language,
+    setLanguage,
     isSupported,
-    // Provide aliases for backwards compatibility
     isVoiceEnabled: isVoiceOn,
     setIsVoiceEnabled: setIsVoiceOn
   }

@@ -75,8 +75,9 @@ export default function Sidebar({
   useEffect(() => {
     if (travelHour >= 19 || travelHour < 5) {
       speak(
-        "Night travel detected. Please stay on well-lit roads and keep your emergency contacts informed.",
-        "रात का समय है। कृपया रोशनी वाली सड़कों पर रहें और अपने आपातकालीन संपर्कों को सूचित रखें।"
+        language.startsWith('hi')
+        ? "रात का समय है। कृपया रोशनी वाली सड़कों पर रहें और सुरक्षित मार्ग चुनें।"
+        : "Night time detected. Please stay on well-lit roads and choose the safest route."
       );
     }
   }, [travelHour, speak]);
@@ -85,8 +86,8 @@ export default function Sidebar({
   useEffect(() => {
     if (routes && routes.length > 0) {
       speak(
-        language === 'hi'
-        ? `${routes.length} रास्ते मिले। सबसे सुरक्षित रास्ता चुना गया।`
+        language.startsWith('hi')
+        ? `${routes.length} रास्ते मिले। सबसे सुरक्षित रास्ता चुन लिया गया है।`
         : `${routes.length} routes found. Safest route selected automatically.`
       );
     }
@@ -260,11 +261,23 @@ export default function Sidebar({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setLanguage(language === 'en-IN' ? 'hi-IN' : 'en-IN')}
-                  title={language === 'hi-IN' ? "Hindi" : "English"}
-                  className="px-3 rounded-xl border border-brand-border bg-brand-surface text-lg hover:bg-brand-bg transition-all flex items-center justify-center"
+                  onClick={() => setLanguage(language === 'hi-IN' ? 'en-IN' : 'hi-IN')}
+                  title={language === 'hi-IN' ? "Switch to English" : "Switch to Hindi"}
+                  className="px-3 rounded-xl border border-brand-border bg-brand-surface text-lg hover:bg-brand-bg transition-all flex items-center justify-center gap-1"
                 >
-                  {language === 'hi-IN' ? '🇮🇳' : '🇬🇧'}
+                  {language === 'hi-IN' ? '🇮🇳 Hindi' : '🇬🇧 English'}
+                </button>
+                {/* Debug Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const voices = window.speechSynthesis.getVoices();
+                    console.log('Voices found:', voices.map(v => `${v.name} (${v.lang})`));
+                    alert(`${voices.length} voices found. Check console for details.`);
+                  }}
+                  className="px-2 rounded-xl border border-brand-border bg-brand-surface text-[10px] text-brand-text-muted hover:text-brand-purple transition-all"
+                >
+                  Debug Voices
                 </button>
               </>
             )}

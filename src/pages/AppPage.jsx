@@ -30,9 +30,9 @@ export default function AppPage() {
   useEffect(() => {
     setTimeout(() => {
       speak(
-        language === 'hi'
-        ? 'SafeRoute AI में आपका स्वागत है। अपना गंतव्य दर्ज करें।'
-        : 'Welcome to SafeRoute AI. Enter your destination to find safe routes.'
+        language.startsWith('hi')
+        ? 'SafeRoute AI में आपका स्वागत है। अपना गंतव्य दर्ज करें और सुरक्षित मार्ग खोजें।'
+        : 'Welcome to SafeRoute AI. Enter your destination to find the safest routes.'
       );
     }, 1500);
   }, []);
@@ -144,8 +144,8 @@ export default function AppPage() {
     setSelectedRoute(route);
     if (route) {
       speak(
-        language === 'hi'
-        ? `${route.name} चुना गया। दूरी ${route.distance} किलोमीटर। सुरक्षा स्कोर ${route.score}`
+        language.startsWith('hi')
+        ? `${route.name} चुना गया। दूरी ${route.distance} किलोमीटर। सुरक्षा स्कोर ${route.score} है।`
         : `${route.name} selected. Distance ${route.distance} kilometers. Safety score ${route.score} out of 100.`
       );
       if (isMobile) {
