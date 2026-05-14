@@ -95,6 +95,11 @@ export default function Dashboard() {
         () => {
           alert("Unable to get location for Near Me filter. Defaulting to Indore area.");
           setAlertFilter('Near Me');
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 5000,
+          maximumAge: 60000
         }
       );
     } else {

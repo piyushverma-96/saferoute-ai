@@ -58,6 +58,11 @@ export default function ReportForm() {
         console.error(error);
         setError('Unable to retrieve your location');
         setIsLocating(false);
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 5000,
+        maximumAge: 60000
       }
     );
   };

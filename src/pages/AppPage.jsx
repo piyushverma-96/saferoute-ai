@@ -41,67 +41,64 @@ export default function AppPage() {
   const detectLocation = () => {
     setIsDetectingLocation(true);
     setLocationError('');
+    
     if (navigator.geolocation) {
-      let attempts = 0;
-      const watchId = navigator.geolocation.watchPosition(
+      // Use getCurrentPosition for faster, one-time detection
+      navigator.geolocation.getCurrentPosition(
         async (position) => {
-          attempts++;
           const { latitude, longitude, accuracy } = position.coords;
           
-          if (accuracy < 100 || attempts >= 2) {
-            navigator.geolocation.clearWatch(watchId);
+          const isValidIndiaLocation = (lat, lng) => {
+            return lat >= 8.0 && lat <= 37.0 && lng >= 68.0 && lng <= 97.0;
+          };
+
+          if (!isValidIndiaLocation(latitude, longitude)) {
+            setStartQuery('Indore, MP');
+            setUserCoords([22.7196, 75.8577]);
+            setGpsAccuracy(null);
+            setLocationError('Using Indore as default location (GPS outside India)');
+            setIsDetectingLocation(false);
+            return;
+          }
+
+          try {
+            const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=16&addressdetails=1`;
+            const res = await fetch(url, {
+              headers: {
+                'Accept-Language': 'en-US,en',
+                'User-Agent': 'SafeRouteAI/1.0'
+              }
+            });
+            const data = await res.json();
             
-            const isValidIndiaLocation = (lat, lng) => {
-              return lat >= 8.0 && lat <= 37.0 && lng >= 68.0 && lng <= 97.0;
-            };
-
-            if (!isValidIndiaLocation(latitude, longitude)) {
-              setStartQuery('Indore, MP');
-              setUserCoords([22.7196, 75.8577]);
-              setGpsAccuracy(null);
-              setLocationError('Using Indore as default location (GPS outside India)');
-              setIsDetectingLocation(false);
-              return;
-            }
-
-            try {
-              const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=16&addressdetails=1`;
-              const res = await fetch(url, {
-                headers: {
-                  'Accept-Language': 'en-US,en',
-                  'User-Agent': 'SafeRouteAI/1.0'
-                }
-              });
-              const data = await res.json();
-              
-              const addr = data.address;
-              const name = 
-                addr?.suburb ||
-                addr?.neighbourhood ||
-                addr?.quarter ||
-                addr?.road ||
-                addr?.village ||
-                addr?.town ||
-                addr?.city ||
-                data.display_name?.split(',')[0] || 'Current Location';
-              
-              const city = addr?.city || addr?.town || addr?.county || 'Indore';
-              
-              setStartQuery(`${name}, ${city}`);
-              setUserCoords([latitude, longitude]);
-              setGpsAccuracy(accuracy);
-              
-              speak("Location detected. Enter your destination to find safe routes.");
-            } catch(err) {
-              setStartQuery('Current Location');
-              setUserCoords([latitude, longitude]);
-              setGpsAccuracy(accuracy);
-            } finally {
-              setIsDetectingLocation(false);
-            }
+            const addr = data.address;
+            const name = 
+              addr?.suburb ||
+              addr?.neighbourhood ||
+              addr?.quarter ||
+              addr?.road ||
+              addr?.village ||
+              addr?.town ||
+              addr?.city ||
+              data.display_name?.split(',')[0] || 'Current Location';
+            
+            const city = addr?.city || addr?.town || addr?.county || 'Indore';
+            
+            setStartQuery(`${name}, ${city}`);
+            setUserCoords([latitude, longitude]);
+            setGpsAccuracy(accuracy);
+            
+            speak("Location detected. Enter your destination to find safe routes.");
+          } catch(err) {
+            setStartQuery('Current Location');
+            setUserCoords([latitude, longitude]);
+            setGpsAccuracy(accuracy);
+          } finally {
+            setIsDetectingLocation(false);
           }
         },
         (error) => {
+          console.error("GPS Error:", error);
           setStartQuery('Indore, MP');
           setUserCoords([22.7196, 75.8577]);
           setGpsAccuracy(null);
@@ -109,9 +106,9 @@ export default function AppPage() {
           setIsDetectingLocation(false);
         },
         {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
+          enableHighAccuracy: false, // Much faster
+          timeout: 5000,
+          maximumAge: 60000 // Use cached location if available
         }
       );
     } else {
