@@ -569,9 +569,9 @@ export default function Sidebar({
                         }}>📞</a>
                       </div>
                     );
-                  </div>
-                </div>
-              )}
+                  })
+                )}
+              </div>
 
               {/* Safety tip */}
               <div style={{
