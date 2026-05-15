@@ -160,6 +160,17 @@ function App() {
       window.speechSynthesis.speak(utterance);
     };
     document.addEventListener('touchstart', unlockAudio, { once: true });
+
+    // Initialize mock contacts for demo
+    if (!localStorage.getItem('trusted_contacts')) {
+      import('./data/mockData').then(({ mockTrustedContacts }) => {
+        localStorage.setItem(
+          'trusted_contacts',
+          JSON.stringify(mockTrustedContacts)
+        );
+      });
+    }
+
     return () => {
       document.removeEventListener('touchstart', unlockAudio);
     };

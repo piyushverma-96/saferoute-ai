@@ -44,3 +44,30 @@ export const mockStats = {
   incidents: 12,
   activeUsers: 89
 };
+
+export const mockTrustedContacts = [
+  {
+    name: 'Mom',
+    phone: '9876543210',
+    relation: 'Family',
+    address: 'Vijay Nagar, Indore',
+    lat: 22.7533,
+    lng: 75.8937
+  },
+  {
+    name: 'Best Friend',
+    phone: '9123456789', 
+    relation: 'Friend',
+    address: 'Palasia, Indore',
+    lat: 22.7196,
+    lng: 75.8577
+  },
+  {
+    name: 'Office Colleague',
+    phone: '9988776655',
+    relation: 'Colleague',
+    address: 'Rajwada, Indore',
+    lat: 22.7196,
+    lng: 75.8411
+  }
+]

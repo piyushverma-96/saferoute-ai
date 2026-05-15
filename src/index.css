@@ -118,3 +118,18 @@
     padding: 8px 2px !important;
   }
 }
+
+/* Contact marker labels */
+.contact-label {
+  background: #1a2332 !important;
+  border: 1px solid #7c3aed !important;
+  color: white !important;
+  font-size: 11px !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+.contact-label::before {
+  display: none !important;
+}

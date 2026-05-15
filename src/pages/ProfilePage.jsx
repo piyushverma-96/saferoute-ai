@@ -4,6 +4,147 @@ import { useNavigate } from 'react-router-dom';
 import { User, Phone, Map, Bell, Plus, Shield, Check, X, LogOut } from 'lucide-react';
 import { useVoiceNavigation } from '../hooks/useVoiceNavigation';
 
+const geocodeContact = async (address) => {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`
+    )
+    const data = await res.json()
+    if (data[0]) {
+      return {
+        lat: parseFloat(data[0].lat),
+        lng: parseFloat(data[0].lon)
+      }
+    }
+  } catch (e) {
+    console.error("Geocoding failed", e)
+  }
+  return null
+}
+
+const ContactManager = () => {
+  const [contacts, setContacts] = useState([])
+  const [isAdding, setIsAdding] = useState(false)
+  const [newContact, setNewContact] = useState({
+    name: '',
+    phone: '',
+    relation: '',
+    address: ''
+  })
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const saved = localStorage.getItem('trusted_contacts')
+    if (saved) setContacts(JSON.parse(saved))
+  }, [])
+
+  const saveContacts = (updated) => {
+    setContacts(updated)
+    localStorage.setItem('trusted_contacts', JSON.stringify(updated))
+  }
+
+  const handleAdd = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    
+    let coords = { lat: null, lng: null }
+    if (newContact.address) {
+      const res = await geocodeContact(newContact.address)
+      if (res) coords = res
+    }
+
+    const contactToAdd = { ...newContact, ...coords }
+    const updated = [...contacts, contactToAdd]
+    saveContacts(updated)
+    setNewContact({ name: '', phone: '', relation: '', address: '' })
+    setIsAdding(false)
+    setLoading(false)
+  }
+
+  const removeContact = (index) => {
+    const updated = contacts.filter((_, i) => i !== index)
+    saveContacts(updated)
+  }
+
+  return (
+    <div className="space-y-4">
+      {contacts.map((contact, i) => (
+        <div key={i} className="flex items-center justify-between p-3 bg-brand-surface/50 rounded-lg border border-brand-border/30">
+          <div>
+            <div className="font-semibold text-brand-text-primary">{contact.name}</div>
+            <div className="text-xs text-brand-text-secondary">{contact.relation} • {contact.phone}</div>
+            {contact.address && (
+              <div className="text-[10px] text-brand-purple flex items-center gap-1 mt-1">
+                <Map size={10} /> {contact.address} {contact.lat ? '✓' : '✗'}
+              </div>
+            )}
+          </div>
+          <button 
+            onClick={() => removeContact(i)}
+            className="p-2 text-brand-danger hover:bg-brand-danger/10 rounded-lg transition-colors"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      ))}
+
+      {isAdding ? (
+        <form onSubmit={handleAdd} className="p-4 bg-brand-surface rounded-lg border border-brand-purple/30 space-y-3">
+          <input
+            placeholder="Name"
+            className="w-full bg-brand-bg border border-brand-border rounded-lg p-2 text-sm focus:border-brand-purple outline-none"
+            value={newContact.name}
+            onChange={e => setNewContact({...newContact, name: e.target.value})}
+            required
+          />
+          <input
+            placeholder="Phone Number"
+            className="w-full bg-brand-bg border border-brand-border rounded-lg p-2 text-sm focus:border-brand-purple outline-none"
+            value={newContact.phone}
+            onChange={e => setNewContact({...newContact, phone: e.target.value})}
+            required
+          />
+          <input
+            placeholder="Relation (e.g. Mom, Friend)"
+            className="w-full bg-brand-bg border border-brand-border rounded-lg p-2 text-sm focus:border-brand-purple outline-none"
+            value={newContact.relation}
+            onChange={e => setNewContact({...newContact, relation: e.target.value})}
+          />
+          <input
+            placeholder="Their area/address (for safety tracking)"
+            className="w-full bg-brand-bg border border-brand-border rounded-lg p-2 text-sm focus:border-brand-purple outline-none"
+            value={newContact.address}
+            onChange={e => setNewContact({...newContact, address: e.target.value})}
+          />
+          <div className="flex gap-2 pt-2">
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="flex-1 bg-gradient-brand text-white p-2 rounded-lg text-sm font-medium disabled:opacity-50"
+            >
+              {loading ? 'Geocoding...' : 'Save Contact'}
+            </button>
+            <button 
+              type="button"
+              onClick={() => setIsAdding(false)}
+              className="px-4 py-2 border border-brand-border rounded-lg text-sm"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      ) : (
+        <button 
+          onClick={() => setIsAdding(true)}
+          className="w-full flex items-center justify-center gap-2 p-3 text-sm text-brand-purple hover:bg-brand-purple/5 border border-dashed border-brand-purple/30 rounded-lg transition-colors font-medium"
+        >
+          <Plus size={16} /> Add Trusted Contact
+        </button>
+      )}
+    </div>
+  )
+}
+
 export default function ProfilePage() {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
@@ -78,19 +219,8 @@ export default function ProfilePage() {
               <Phone className="text-brand-danger" size={20} />
               Emergency Contacts
             </h2>
-            <div className="card-container p-2">
-              <div className="flex items-center justify-between p-3 border-b border-brand-border/50">
-                <div>
-                  <div className="font-semibold">{user.emergencyContact?.name || 'Emergency Contact'}</div>
-                  <div className="text-sm text-brand-text-secondary">{user.emergencyContact?.phone || 'Not provided'}</div>
-                </div>
-                <button className="p-2 bg-brand-surface border border-brand-border rounded-lg text-brand-text-secondary hover:text-brand-safe hover:border-brand-safe transition-colors">
-                  <Phone size={16} />
-                </button>
-              </div>
-              <button className="w-full flex items-center justify-center gap-2 p-3 text-sm text-brand-purple hover:bg-brand-purple/5 transition-colors font-medium">
-                <Plus size={16} /> Add Contact
-              </button>
+            <div className="card-container p-4">
+              <ContactManager />
             </div>
           </section>
 

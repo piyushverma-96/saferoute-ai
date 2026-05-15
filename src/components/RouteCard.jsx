@@ -131,6 +131,60 @@ const RouteCard = ({ route, selected, onSelect, travelTime }) => {
         ))}
       </div>
 
+      {/* NEARBY CONTACTS */}
+      {route.nearbyContacts?.length > 0 && (
+        <div style={{
+          marginTop: '10px',
+          padding: '8px 10px',
+          background: 'rgba(124,58,237,0.1)',
+          border: '1px solid rgba(124,58,237,0.3)',
+          borderRadius: '8px',
+          marginBottom: '10px'
+        }}>
+          <div style={{
+            fontSize: '11px',
+            color: '#a78bfa',
+            marginBottom: '6px',
+            fontWeight: '500'
+          }}>
+            👥 Trusted Contacts on this route:
+          </div>
+          {route.nearbyContacts.map((c, i) => (
+            <div key={i} style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '4px'
+            }}>
+              <div style={{
+                fontSize: '11px',
+                color: '#e2e8f0',
+                display: 'flex',
+                flexDirection: 'column'
+              }}>
+                <span style={{fontWeight: '500'}}>👤 {c.name}</span>
+                <span style={{fontSize: '9px', color: '#94a3b8'}}>{c.address}</span>
+              </div>
+              <a 
+                href={`tel:${c.phone}`}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  background: '#7c3aed',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '4px 8px',
+                  fontSize: '10px',
+                  textDecoration: 'none'
+                }}
+              >
+                Call
+              </a>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* AI ANALYSIS BUTTON 
           - Always visible, large touch target */}
       <button

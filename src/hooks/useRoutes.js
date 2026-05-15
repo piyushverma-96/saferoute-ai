@@ -1,6 +1,39 @@
 import { useState, useCallback } from 'react';
 import { geocode } from '../utils/geocoding';
 
+// Haversine distance formula
+const getDistanceKm = (lat1, lng1, lat2, lng2) => {
+  const R = 6371
+  const dLat = (lat2-lat1) * Math.PI/180
+  const dLng = (lng2-lng1) * Math.PI/180
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI/180) * 
+    Math.cos(lat2 * Math.PI/180) *
+    Math.sin(dLng/2) * Math.sin(dLng/2)
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+}
+
+const findContactsNearRoute = (routeCoords, contacts, thresholdKm = 0.5) => {
+  const nearbyContacts = []
+  
+  contacts.forEach(contact => {
+    if (!contact.lat || !contact.lng) return
+    
+    // Check distance from contact to any point on the route
+    const isNear = routeCoords.some(([lat, lng]) => {
+      const dist = getDistanceKm(lat, lng, contact.lat, contact.lng)
+      return dist <= thresholdKm
+    })
+    
+    if (isNear) {
+      nearbyContacts.push(contact)
+    }
+  })
+  
+  return nearbyContacts
+}
+
 // SIMPLE mock routes - NO sin/cos
 const generateMockRoutes = (start, end) => {
   const hour = new Date().getHours()
@@ -116,7 +149,13 @@ const generateMockRoutes = (start, end) => {
       ],
       confidence: 91
     }
-  ]
+  ].map(route => {
+    const savedContacts = JSON.parse(localStorage.getItem('trusted_contacts') || '[]')
+    return {
+      ...route,
+      nearbyContacts: findContactsNearRoute(route.coordinates, savedContacts)
+    }
+  })
 }
 
 export function useRoutes() {
@@ -291,7 +330,13 @@ export function useRoutes() {
             ],
             confidence: 91
           }
-        ]
+        ].map(route => {
+          const savedContacts = JSON.parse(localStorage.getItem('trusted_contacts') || '[]')
+          return {
+            ...route,
+            nearbyContacts: findContactsNearRoute(route.coordinates, savedContacts)
+          }
+        })
       } catch (err) {
         console.log('OSRM failed:', err);
         finalRoutes = generateMockRoutes(start, end, travelHour);
