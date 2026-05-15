@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
-import { MapPin, Navigation, Clock, Search, Sun, Sunset, Moon, Volume2, VolumeX } from 'lucide-react';
+import { MapPin, Navigation, Clock, Search, Sun, Sunset, Moon, Volume2, VolumeX, Check } from 'lucide-react';
 import RouteCard from './RouteCard';
 import SkeletonCard from './SkeletonCard';
 import { useVoiceNavigation } from '../hooks/useVoiceNavigation';
@@ -30,7 +30,11 @@ export default function Sidebar({
 }) {
   const { isVoiceEnabled, setIsVoiceEnabled, speak, language, setLanguage, isSupported } = useVoiceNavigation();
   const [destinationSuggestions, setDestinationSuggestions] = useState([]);
+  const [startSuggestions, setStartSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showStartSuggestions, setShowStartSuggestions] = useState(false);
+  const [isStartSelected, setIsStartSelected] = useState(false);
+  const [isEndSelected, setIsEndSelected] = useState(false);
 
   const popularIndoreLocations = [
     "Rajwada, Indore",
@@ -56,12 +60,30 @@ export default function Sidebar({
         } catch(e) {
           console.error("Autocomplete error", e);
         }
-      }, 500);
+      }, 400);
     } else if (endQuery.length < 3) {
       setDestinationSuggestions(popularIndoreLocations.slice(0, 5));
     }
     return () => clearTimeout(timeoutId);
   }, [endQuery, showSuggestions]);
+
+  useEffect(() => {
+    let timeoutId;
+    if (startQuery.length >= 3 && showStartSuggestions && !popularIndoreLocations.includes(startQuery)) {
+      timeoutId = setTimeout(async () => {
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(startQuery)}&format=json&limit=5&countrycodes=in&viewbox=75.5,22.5,76.2,23.0`);
+          const data = await res.json();
+          setStartSuggestions(data.map(d => d.display_name));
+        } catch(e) {
+          console.error("Autocomplete error", e);
+        }
+      }, 400);
+    } else if (startQuery.length < 3) {
+      setStartSuggestions(popularIndoreLocations.slice(0, 5));
+    }
+    return () => clearTimeout(timeoutId);
+  }, [startQuery, showStartSuggestions]);
 
   const handleDestinationFocus = () => {
     setShowSuggestions(true);
@@ -70,9 +92,33 @@ export default function Sidebar({
     }
   };
 
-  const selectSuggestion = (s) => {
-    setEndQuery(s);
-    setShowSuggestions(false);
+  const handleStartFocus = () => {
+    setShowStartSuggestions(true);
+    if (!startQuery || startQuery.length < 3) {
+      setStartSuggestions(popularIndoreLocations.slice(0, 5));
+    }
+  };
+
+  const selectSuggestion = (s, type = 'destination') => {
+    let currentStart = startQuery;
+    let currentEnd = endQuery;
+
+    if (type === 'start') {
+      currentStart = s;
+      setStartQuery(s);
+      setIsStartSelected(true);
+      setShowStartSuggestions(false);
+    } else {
+      currentEnd = s;
+      setEndQuery(s);
+      setIsEndSelected(true);
+      setShowSuggestions(false);
+    }
+
+    // Automatically call onSearch if both are filled
+    if (currentStart && currentEnd) {
+      onSearch(currentStart, currentEnd, travelHour, routePref);
+    }
   };
 
   // Voice announcement for night mode
@@ -138,11 +184,21 @@ export default function Sidebar({
               type="text" 
               placeholder={isDetectingLocation ? "📍 Detecting location..." : "Starting Location..."}
               value={startQuery}
-              onChange={(e) => setStartQuery(e.target.value)}
+              onChange={(e) => {
+                setStartQuery(e.target.value);
+                setIsStartSelected(false);
+              }}
+              onFocus={handleStartFocus}
+              onBlur={() => setShowStartSuggestions(false)}
               disabled={isDetectingLocation}
               style={{ width: '100%', padding: '10px 40px 10px 40px', fontSize: '14px' }}
               className="bg-brand-bg border border-brand-border rounded-lg focus:outline-none focus:border-brand-purple focus:ring-1 focus:ring-brand-purple transition-all disabled:opacity-70 disabled:cursor-wait"
             />
+            {isStartSelected && (
+              <div className="absolute right-10 top-1/2 -translate-y-1/2 text-brand-safe">
+                <Check size={16} />
+              </div>
+            )}
             <button 
               type="button"
               onClick={detectLocation}
@@ -151,6 +207,26 @@ export default function Sidebar({
             >
               <Navigation size={16} />
             </button>
+            {showStartSuggestions && startSuggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-[#1A1A2E] border border-brand-purple rounded-lg shadow-xl z-50 overflow-hidden">
+                {startSuggestions.map((s, i) => (
+                  <div 
+                    key={i} 
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      selectSuggestion(s, 'start');
+                    }}
+                    onTouchEnd={(e) => {
+                      e.preventDefault();
+                      selectSuggestion(s, 'start');
+                    }}
+                    className="px-4 py-2 text-sm text-brand-text-primary hover:bg-brand-purple hover:text-white cursor-pointer border-b border-brand-border/50 last:border-0"
+                  >
+                    {s}
+                  </div>
+                ))}
+              </div>
+            )}
             {gpsAccuracy && !locationError && (
               <div className={`text-[11px] mt-1 ml-1 ${gpsAccuracy < 50 ? 'text-brand-safe' : gpsAccuracy <= 200 ? 'text-brand-warning' : 'text-brand-danger'}`}>
                 {gpsAccuracy < 50 ? "📍 High accuracy" : gpsAccuracy <= 200 ? "📍 Approximate" : "📍 Low accuracy"}
@@ -171,18 +247,33 @@ export default function Sidebar({
               type="text" 
               placeholder="Destination..." 
               value={endQuery}
-              onChange={(e) => setEndQuery(e.target.value)}
+              onChange={(e) => {
+                setEndQuery(e.target.value);
+                setIsEndSelected(false);
+              }}
               onFocus={handleDestinationFocus}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-              style={{ width: '100%', padding: '10px 12px 10px 40px', fontSize: '14px' }}
+              onBlur={() => setShowSuggestions(false)}
+              style={{ width: '100%', padding: '10px 40px 10px 40px', fontSize: '14px' }}
               className="bg-brand-bg border border-brand-border rounded-lg focus:outline-none focus:border-brand-purple focus:ring-1 focus:ring-brand-purple transition-all"
             />
+            {isEndSelected && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-safe">
+                <Check size={16} />
+              </div>
+            )}
             {showSuggestions && destinationSuggestions.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-[#1A1A2E] border border-brand-purple rounded-lg shadow-xl z-50 overflow-hidden">
                 {destinationSuggestions.map((s, i) => (
                   <div 
                     key={i} 
-                    onClick={() => selectSuggestion(s)}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      selectSuggestion(s, 'destination');
+                    }}
+                    onTouchEnd={(e) => {
+                      e.preventDefault();
+                      selectSuggestion(s, 'destination');
+                    }}
                     className="px-4 py-2 text-sm text-brand-text-primary hover:bg-brand-purple hover:text-white cursor-pointer border-b border-brand-border/50 last:border-0"
                   >
                     {s}
