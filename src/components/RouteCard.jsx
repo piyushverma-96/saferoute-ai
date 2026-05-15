@@ -1,7 +1,33 @@
 import React, { useState } from 'react';
+import { MOCK_CONTACTS } from '../data/mockData';
+
+const getDistanceKm = (lat1, lng1, lat2, lng2) => {
+  const R = 6371
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLng = (lng2 - lng1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) *
+    Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+const getNearbyContacts = (routeCoords) => {
+  const contacts = JSON.parse(
+    localStorage.getItem('trusted_contacts')
+  ) || MOCK_CONTACTS
+
+  return contacts.filter(contact => {
+    if (!contact.lat || !contact.lng) return false
+    return routeCoords.some(([lat, lng]) =>
+      getDistanceKm(lat, lng, contact.lat, contact.lng) <= 0.8
+    )
+  })
+}
 
 const RouteCard = ({ route, selected, onSelect, travelTime }) => {
   const [showAI, setShowAI] = useState(false)
+  const nearbyContacts = getNearbyContacts(route.coordinates || [])
   
   return (
     <div
@@ -132,14 +158,13 @@ const RouteCard = ({ route, selected, onSelect, travelTime }) => {
       </div>
 
       {/* NEARBY CONTACTS */}
-      {route.nearbyContacts?.length > 0 && (
+      {nearbyContacts.length > 0 && (
         <div style={{
           marginTop: '10px',
-          padding: '8px 10px',
+          padding: '8px',
           background: 'rgba(124,58,237,0.1)',
-          border: '1px solid rgba(124,58,237,0.3)',
           borderRadius: '8px',
-          marginBottom: '10px'
+          border: '1px solid #7c3aed'
         }}>
           <div style={{
             fontSize: '11px',
@@ -147,34 +172,30 @@ const RouteCard = ({ route, selected, onSelect, travelTime }) => {
             marginBottom: '6px',
             fontWeight: '500'
           }}>
-            👥 Trusted Contacts on this route:
+            👥 Contacts on this route:
           </div>
-          {route.nearbyContacts.map((c, i) => (
+          {nearbyContacts.map((c, i) => (
             <div key={i} style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
               marginBottom: '4px'
             }}>
-              <div style={{
-                fontSize: '11px',
-                color: '#e2e8f0',
-                display: 'flex',
-                flexDirection: 'column'
+              <span style={{
+                fontSize: '12px',
+                color: '#e2e8f0'
               }}>
-                <span style={{fontWeight: '500'}}>👤 {c.name}</span>
-                <span style={{fontSize: '9px', color: '#94a3b8'}}>{c.address}</span>
-              </div>
+                👤 {c.name}
+              </span>
               <a 
                 href={`tel:${c.phone}`}
                 onClick={(e) => e.stopPropagation()}
                 style={{
                   background: '#7c3aed',
                   color: 'white',
-                  border: 'none',
+                  padding: '3px 8px',
                   borderRadius: '4px',
-                  padding: '4px 8px',
-                  fontSize: '10px',
+                  fontSize: '11px',
                   textDecoration: 'none'
                 }}
               >

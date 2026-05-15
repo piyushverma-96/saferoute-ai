@@ -45,8 +45,9 @@ export const mockStats = {
   activeUsers: 89
 };
 
-export const mockTrustedContacts = [
+export const MOCK_CONTACTS = [
   {
+    id: 1,
     name: 'Mom',
     phone: '9876543210',
     relation: 'Family',
@@ -55,19 +56,21 @@ export const mockTrustedContacts = [
     lng: 75.8937
   },
   {
+    id: 2,
     name: 'Best Friend',
-    phone: '9123456789', 
+    phone: '9123456789',
     relation: 'Friend',
     address: 'Palasia, Indore',
     lat: 22.7196,
     lng: 75.8577
   },
   {
-    name: 'Office Colleague',
+    id: 3,
+    name: 'Colleague',
     phone: '9988776655',
     relation: 'Colleague',
     address: 'Rajwada, Indore',
-    lat: 22.7196,
-    lng: 75.8411
+    lat: 22.7300,
+    lng: 75.8700
   }
 ]

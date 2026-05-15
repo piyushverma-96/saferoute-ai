@@ -1,7 +1,13 @@
-import React, { useEffect } from 'react'
-import { MapContainer, TileLayer, Polyline, Marker, Popup, useMap, ZoomControl } from 'react-leaflet'
+import React, { useEffect, useRef } from 'react'
+import { MapContainer, TileLayer, Polyline, Marker, useMap, ZoomControl } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+
+const MOCK_CONTACTS = [
+  { name: 'Mom', phone: '9876543210', relation: 'Family', address: 'Vijay Nagar, Indore', lat: 22.7533, lng: 75.8937 },
+  { name: 'Best Friend', phone: '9123456789', relation: 'Friend', address: 'Palasia, Indore', lat: 22.7196, lng: 75.8577 },
+  { name: 'Colleague', phone: '9988776655', relation: 'Colleague', address: 'Rajwada, Indore', lat: 22.7196, lng: 75.8411 }
+]
 
 // Map updater component
 const MapUpdater = ({ 
@@ -10,63 +16,11 @@ const MapUpdater = ({
   routes
 }) => {
   const map = useMap()
+  const contactMarkersRef = useRef([])
   
-  // ADD THIS FUNCTION - Circle markers for contacts
-  const addContactMarkers = (map, contacts) => {
-    if (!map || !contacts || contacts.length === 0) return
-
-    // Clear existing contact markers/layers to avoid duplicates
-    map.eachLayer((layer) => {
-      if (layer instanceof L.CircleMarker && layer.options.isContact) {
-        map.removeLayer(layer)
-      }
-    })
-
-    contacts.forEach(contact => {
-      if (!contact.lat || !contact.lng) return
-
-      console.log('Adding circle marker for:', contact.name)
-
-      const marker = L.circleMarker(
-        [contact.lat, contact.lng],
-        {
-          radius: 12,
-          fillColor: '#7c3aed',
-          color: '#ffffff',
-          weight: 2,
-          opacity: 1,
-          fillOpacity: 0.9,
-          interactive: true,
-          isContact: true // Custom flag to identify for clearing
-        }
-      )
-
-      marker.bindTooltip(contact.name, {
-        permanent: true,
-        direction: 'top',
-        offset: [0, -15],
-        className: 'contact-label'
-      })
-
-      marker.bindPopup(`
-        <div style="font-family: sans-serif; padding: 8px; min-width: 160px;">
-          <b style="color:#7c3aed; font-size:14px;">👤 ${contact.name}</b>
-          <hr style="border-color:#eee; margin:6px 0"/>
-          <div style="font-size:12px; margin-bottom:4px;">📍 ${contact.address || 'Near route'}</div>
-          <div style="font-size:12px; margin-bottom:8px;">🔗 ${contact.relation || 'Contact'}</div>
-          <a href="tel:${contact.phone}"
-            style="display:block; background:#7c3aed; color:white; text-align:center; padding:6px; border-radius:6px; text-decoration:none; font-size:12px;"
-          >📞 Call ${contact.name}</a>
-        </div>
-      `)
-
-      marker.addTo(map)
-    })
-  }
-
+  // Handle route bounds
   useEffect(() => {
     if (!map || !routes?.length) return
-    
     const allCoords = routes.flatMap(r => r.coordinates || [])
     if (allCoords.length > 0) {
       try {
@@ -76,31 +30,113 @@ const MapUpdater = ({
     }
   }, [routes, map])
 
+  // Handle selected route focus
   useEffect(() => {
     if (!map || !selectedRoute) return
-    
     if (selectedRoute?.coordinates?.length > 0) {
       try {
         const bounds = L.latLngBounds(selectedRoute.coordinates)
         map.flyToBounds(bounds, { padding: [60, 60], maxZoom: 15, duration: 0.8 })
       } catch(e) { console.log('bounds error:', e) }
     }
-
-    // LOAD CONTACTS whenever route is selected
-    const savedContacts = JSON.parse(localStorage.getItem('trusted_contacts') || '[]')
-    if (savedContacts.length > 0) {
-      addContactMarkers(map, savedContacts)
-    } else {
-      const mockContacts = [
-        { name: 'Mom', phone: '9876543210', relation: 'Family', address: 'Vijay Nagar, Indore', lat: 22.7533, lng: 75.8937 },
-        { name: 'Best Friend', phone: '9123456789', relation: 'Friend', address: 'Palasia, Indore', lat: 22.7196, lng: 75.8577 },
-        { name: 'Colleague', phone: '9988776655', relation: 'Colleague', address: 'Rajwada, Indore', lat: 22.7196, lng: 75.8411 }
-      ]
-      localStorage.setItem('trusted_contacts', JSON.stringify(mockContacts))
-      addContactMarkers(map, mockContacts)
-    }
   }, [selectedRoute, map])
-  
+
+  // CONTACT MARKERS EFFECT - Runs when routes change
+  useEffect(() => {
+    if (!map) return
+    if (!routes || routes.length === 0) return
+
+    // 1. Remove old contact markers
+    contactMarkersRef.current.forEach(m => map.removeLayer(m))
+    contactMarkersRef.current = []
+
+    // 2. Get contacts from localStorage or mock
+    const saved = localStorage.getItem('trusted_contacts')
+    const contacts = saved ? JSON.parse(saved) : MOCK_CONTACTS
+
+    // 3. Save mock if nothing saved
+    if (!saved) {
+      localStorage.setItem('trusted_contacts', JSON.stringify(MOCK_CONTACTS))
+    }
+
+    // 4. Add each contact marker
+    contacts.forEach(contact => {
+      if (!contact.lat || !contact.lng) return
+
+      // Purple circle marker
+      const marker = L.circleMarker(
+        [contact.lat, contact.lng],
+        {
+          radius: 10,
+          fillColor: '#7c3aed',
+          color: '#fff',
+          weight: 2,
+          fillOpacity: 1,
+          interactive: true
+        }
+      )
+
+      // Popup
+      const popupHTML = `
+        <div style="
+          background:#1a2332;
+          color:white;
+          padding:12px;
+          border-radius:10px;
+          min-width:170px;
+          border:1px solid #7c3aed;
+          font-family:sans-serif;
+        ">
+          <div style="
+            color:#a78bfa;
+            font-weight:600;
+            font-size:14px;
+            margin-bottom:6px;
+          ">👤 ${contact.name}</div>
+          <div style="
+            color:#94a3b8;
+            font-size:12px;
+            margin-bottom:3px;
+          ">📍 ${contact.address}</div>
+          <div style="
+            color:#94a3b8;
+            font-size:12px;
+            margin-bottom:10px;
+          ">🔗 ${contact.relation}</div>
+          <a href="tel:${contact.phone}"
+            style="
+              display:block;
+              background:linear-gradient(135deg,#7c3aed,#ec4899);
+              color:white;
+              text-align:center;
+              padding:8px;
+              border-radius:6px;
+              text-decoration:none;
+              font-size:12px;
+              font-weight:500;
+            "
+          >📞 Call ${contact.name}</a>
+        </div>
+      `
+
+      marker.bindPopup(popupHTML, {
+        maxWidth: 200,
+        className: 'contact-popup'
+      })
+
+      // Permanent name label
+      marker.bindTooltip(contact.name, {
+        permanent: true,
+        direction: 'top',
+        offset: [0, -12],
+        className: 'contact-label'
+      })
+
+      marker.addTo(map)
+      contactMarkersRef.current.push(marker)
+    })
+  }, [routes, map])
+
   useEffect(() => {
     if (!map) return
     if (!selectedRoute && (!routes || routes.length === 0) && userCoords) {
@@ -110,11 +146,6 @@ const MapUpdater = ({
   
   return null
 }
-
-// Marker Pins remain same...
-const createStartPin = () => L.divIcon({ /* ... */ })
-const createEndPin = () => L.divIcon({ /* ... */ })
-const createUserPin = () => L.divIcon({ /* ... */ })
 
 const MapView = ({
   routes = [],
