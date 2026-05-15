@@ -12,6 +12,8 @@ export default function Sidebar({
   setEndQuery, 
   travelHour, 
   setTravelHour, 
+  routePref,
+  setRoutePref,
   onSearch, 
   routes, 
   isLoading, 
@@ -96,7 +98,7 @@ export default function Sidebar({
   const handleSearch = (e) => {
     e.preventDefault();
     if (startQuery && endQuery) {
-      onSearch(startQuery, endQuery, travelHour);
+      onSearch(startQuery, endQuery, travelHour, routePref);
       // Select first route by default is handled in AppPage
     }
   };
@@ -227,6 +229,45 @@ export default function Sidebar({
                   <span>{opt.label}</span>
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Route Preference Section */}
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '8px', fontWeight: '500' }}>
+              🎯 Route Priority
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {[
+                { key: 'safest', label: 'Safest', icon: '🛡', color: '#10b981' },
+                { key: 'balanced', label: 'Balanced', icon: '⚖️', color: '#f59e0b' },
+                { key: 'fastest', label: 'Fastest', icon: '⚡', color: '#ef4444' }
+              ].map(opt => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setRoutePref(opt.key)}
+                  style={{
+                    flex: 1,
+                    padding: '10px 6px',
+                    background: routePref === opt.key ? `${opt.color}22` : '#1a2332',
+                    border: `2px solid ${routePref === opt.key ? opt.color : '#2d3748'}`,
+                    borderRadius: '10px',
+                    color: routePref === opt.key ? opt.color : '#64748b',
+                    cursor: 'pointer',
+                    textAlign: 'center',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <div style={{ fontSize: '18px' }}>{opt.icon}</div>
+                  <div style={{ fontSize: '11px', fontWeight: '600', marginTop: '4px' }}>{opt.label}</div>
+                </button>
+              ))}
+            </div>
+            <div style={{ marginTop: '8px', padding: '8px 10px', background: '#1a2332', borderRadius: '8px', fontSize: '11px', color: '#64748b', textAlign: 'center' }}>
+              {routePref === 'safest' && '🛡 Longest but safest path — well lit streets, CCTV, police nearby'}
+              {routePref === 'balanced' && '⚖️ Good balance of safety and travel time'}
+              {routePref === 'fastest' && '⚡ Quickest route — safety not prioritized'}
             </div>
           </div>
 

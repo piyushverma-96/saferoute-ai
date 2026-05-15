@@ -18,6 +18,8 @@ export default function AppPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
+  const [routePreference, setRoutePreference] = useState('safest');
+
   const { routes, isLoading, error, fetchRoutes, startPoint, endPoint } = useRoutes();
   const { speak, language } = useVoiceNavigation();
 
@@ -123,9 +125,9 @@ export default function AppPage() {
     detectLocation();
   }, []);
 
-  const handleSearch = (start = startQuery, end = endQuery, hour = travelHour) => {
+  const handleSearch = (start = startQuery, end = endQuery, hour = travelHour, pref = routePreference) => {
     if (!start || !end) return;
-    fetchRoutes(start, end, hour);
+    fetchRoutes(start, end, hour, pref);
     setSelectedRoute(null);
     if (isMobile) {
       setSidebarOpen(true);
@@ -135,6 +137,19 @@ export default function AppPage() {
   useEffect(() => {
     if (routes && routes.length > 0) {
       setSelectedRoute(routes[0]);
+      
+      // Voice announcement based on preference
+      if (routePreference === 'safest') {
+        speak(language.startsWith('hi') 
+          ? `सबसे सुरक्षित मार्ग मिला। सुरक्षा स्कोर ${routes[0].score} है।` 
+          : `Safest route found. Safety score is ${routes[0].score}.`);
+      } else if (routePreference === 'fastest') {
+        speak(language.startsWith('hi') 
+          ? `सबसे तेज़ मार्ग मिला। समय ${routes[0].durMin} मिनट।` 
+          : `Fastest route found. Travel time is ${routes[0].durMin} minutes.`);
+      } else {
+        speak(language.startsWith('hi') ? 'संतुलित मार्ग मिला।' : 'Balanced route found.');
+      }
     }
   }, [routes]);
 
@@ -211,6 +226,8 @@ export default function AppPage() {
             setEndQuery={setEndQuery}
             travelHour={travelHour}
             setTravelHour={setTravelHour}
+            routePref={routePreference}
+            setRoutePref={setRoutePreference}
             routes={routes}
             selectedRoute={selectedRoute}
             onRouteSelect={handleRouteSelect}
@@ -291,6 +308,8 @@ export default function AppPage() {
                 setEndQuery={setEndQuery}
                 travelHour={travelHour}
                 setTravelHour={setTravelHour}
+                routePref={routePreference}
+                setRoutePref={setRoutePreference}
                 routes={routes}
                 selectedRoute={selectedRoute}
                 onRouteSelect={handleRouteSelect}

@@ -46,6 +46,22 @@ const RouteCard = ({ route, selected, onSelect, travelTime }) => {
         boxSizing: 'border-box'
       }}
     >
+      {route.recommended && (
+        <div style={{
+          display: 'inline-block',
+          background: 'linear-gradient(135deg,#7c3aed,#ec4899)',
+          color: 'white',
+          fontSize: '10px',
+          fontWeight: '600',
+          padding: '3px 8px',
+          borderRadius: '10px',
+          marginBottom: '8px',
+          letterSpacing: '0.05em'
+        }}>
+          ✨ RECOMMENDED FOR YOU
+        </div>
+      )}
+
       {/* HIGH RISK WARNING BANNER */}
       {route.type === 'risky' && (
         <div style={{
@@ -96,13 +112,17 @@ const RouteCard = ({ route, selected, onSelect, travelTime }) => {
             {route.name}
           </span>
         </div>
-        <span style={{
-          color: route.color,
-          fontSize: '20px',
-          fontWeight: 'bold'
-        }}>
-          {route.score}
-        </span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+          <span style={{
+            color: route.color,
+            fontSize: '20px',
+            fontWeight: 'bold',
+            lineHeight: '1'
+          }}>
+            {route.score}
+            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '400' }}>/100</span>
+          </span>
+        </div>
       </div>
 
       {/* MIDDLE ROW - Distance + Time */}

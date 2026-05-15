@@ -158,6 +158,36 @@ const generateMockRoutes = (start, end) => {
   })
 }
 
+export const getRoutesByPreference = (routes, preference) => {
+  if (!routes || routes.length === 0) return routes;
+
+  // Sort based on user preference
+  const sorted = [...routes];
+
+  if (preference === 'safest') {
+    // Sort by safety score DESC
+    sorted.sort((a, b) => b.score - a.score);
+  } else if (preference === 'fastest') {
+    // Sort by duration ASC
+    sorted.sort((a, b) => a.durMin - b.durMin);
+  } else {
+    // Balanced - sort by combined score
+    sorted.sort((a, b) => {
+      // Balanced logic: normalized score + inverse duration
+      const scoreA = (a.score * 0.5) + ((1 / (a.durMin || 1)) * 1000 * 0.5);
+      const scoreB = (b.score * 0.5) + ((1 / (b.durMin || 1)) * 1000 * 0.5);
+      return scoreB - scoreA;
+    });
+  }
+
+  // Mark top route as recommended
+  return sorted.map((r, i) => ({
+    ...r,
+    recommended: i === 0,
+    rank: i + 1
+  }));
+};
+
 export function useRoutes() {
   const [routes, setRoutes] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -165,7 +195,7 @@ export function useRoutes() {
   const [startPoint, setStartPoint] = useState(null);
   const [endPoint, setEndPoint] = useState(null);
 
-  const fetchRoutes = useCallback(async (startQuery, endQuery, travelHour) => {
+  const fetchRoutes = useCallback(async (startQuery, endQuery, travelHour, preference = 'safest') => {
     if (!startQuery || !endQuery) return;
     
     setIsLoading(true);
@@ -173,73 +203,46 @@ export function useRoutes() {
     setRoutes([]);
     
     try {
-      console.log("Geocoding start location...");
       const startObj = await geocode(startQuery);
       const start = [startObj.lat, startObj.lon];
       
-      console.log("Geocoding destination...");
       const endObj = await geocode(endQuery);
       const end = [endObj.lat, endObj.lon];
       
       setStartPoint(startObj);
       setEndPoint(endObj);
 
-      console.log("Fetching routes from OSRM...");
       let finalRoutes = [];
       
       try {
         const url = 
-          `https://router.project-osrm.org` +
-          `/route/v1/driving/` +
-          `${start[1]},${start[0]};` +
-          `${end[1]},${end[0]}` +
-          `?overview=full&geometries=geojson` +
-          `&alternatives=true`
+          `https://router.project-osrm.org/route/v1/driving/` +
+          `${start[1]},${start[0]};${end[1]},${end[0]}` +
+          `?overview=full&geometries=geojson&alternatives=true`;
         
-        const res = await fetch(url)
-        const data = await res.json()
+        const res = await fetch(url);
+        const data = await res.json();
         
-        if (!data.routes?.length) {
-          throw new Error('no routes')
-        }
+        if (!data.routes?.length) throw new Error('no routes');
         
-        const hour = travelHour || new Date().getHours()
-        const penalty = hour >= 19 ? 15 
-                     : hour >= 17 ? 8 : 0
+        const hour = travelHour || new Date().getHours();
+        const penalty = hour >= 19 ? 15 : hour >= 17 ? 8 : 0;
+        const toLatLng = (coords) => coords.map(([lng, lat]) => [lat, lng]);
         
-        // Convert coordinates helper
-        const toLatLng = (coords) =>
-          coords.map(([lng, lat]) => [lat, lng])
-        
-        // Get real routes from OSRM
-        const r0 = toLatLng(
-          data.routes[0].geometry.coordinates
-        )
-        
+        const r0 = toLatLng(data.routes[0].geometry.coordinates);
         const moderateCoords = r0;
-        const safeCoords = data.routes[1] 
-          ? toLatLng(data.routes[1].geometry.coordinates)
-          : r0;
-          
+        const safeCoords = data.routes[1] ? toLatLng(data.routes[1].geometry.coordinates) : r0;
         const riskyCoords = data.routes[2]
           ? toLatLng(data.routes[2].geometry.coordinates)
           : r0.map(([lat, lng], i, arr) => {
-              // Only offset MIDDLE points
-              // Keep start and end same
-              if (i === 0 || i === arr.length-1) {
-                return [lat, lng]
-              }
-              // Simple fixed offset south-west
-              return [lat - 0.008, lng - 0.006]
+              if (i === 0 || i === arr.length-1) return [lat, lng];
+              return [lat - 0.008, lng - 0.006];
             });
             
-        console.log('Safe first point:', safeCoords[0])
-        console.log('Risky first point:', riskyCoords[0])
+        const d0 = data.routes[0].distance;
+        const t0 = data.routes[0].duration;
         
-        const d0 = data.routes[0].distance
-        const t0 = data.routes[0].duration
-        
-        finalRoutes = [
+        const rawRoutes = [
           {
             id: 1,
             name: 'Safest Route',
@@ -250,23 +253,17 @@ export function useRoutes() {
             coordinates: safeCoords,
             score: Math.max(0, 85 - penalty),
             distance: (d0*1.1/1000).toFixed(1),
+            durMin: Math.round(t0*1.15/60),
             duration: Math.round(t0*1.15/60),
             dist: (d0*1.1/1000).toFixed(1) + ' km',
             time: Math.round(t0*1.15/60) + ' min',
-            rawDistance: d0 * 1.1,
-            tags: ['CCTV','Well Lit',
-                   'Police Nearby'],
+            tags: ['CCTV','Well Lit','Police Nearby'],
             factors: [
-              {icon:'💡',
-               name:'Street Lighting',score:9},
-              {icon:'📹',
-               name:'CCTV Coverage',score:8},
-              {icon:'🚔',
-               name:'Police Proximity',score:9},
-              {icon:'👥',
-               name:'Crowd Density',score:7},
-              {icon:'📊',
-               name:'Crime History',score:8}
+              {icon:'💡', name:'Street Lighting',score:9},
+              {icon:'📹', name:'CCTV Coverage',score:8},
+              {icon:'🚔', name:'Police Proximity',score:9},
+              {icon:'👥', name:'Crowd Density',score:7},
+              {icon:'📊', name:'Crime History',score:8}
             ],
             confidence: 94
           },
@@ -280,23 +277,17 @@ export function useRoutes() {
             coordinates: moderateCoords,
             score: Math.max(0, 65 - penalty),
             distance: (d0/1000).toFixed(1),
+            durMin: Math.round(t0/60),
             duration: Math.round(t0/60),
             dist: (d0/1000).toFixed(1) + ' km',
             time: Math.round(t0/60) + ' min',
-            rawDistance: d0,
-            tags: ['Moderate Risk',
-                   'Some Lighting'],
+            tags: ['Moderate Risk','Some Lighting'],
             factors: [
-              {icon:'💡',
-               name:'Street Lighting',score:6},
-              {icon:'📹',
-               name:'CCTV Coverage',score:5},
-              {icon:'🚔',
-               name:'Police Proximity',score:6},
-              {icon:'👥',
-               name:'Crowd Density',score:7},
-              {icon:'📊',
-               name:'Crime History',score:5}
+              {icon:'💡', name:'Street Lighting',score:6},
+              {icon:'📹', name:'CCTV Coverage',score:5},
+              {icon:'🚔', name:'Police Proximity',score:6},
+              {icon:'👥', name:'Crowd Density',score:7},
+              {icon:'📊', name:'Crime History',score:5}
             ],
             confidence: 87
           },
@@ -310,39 +301,34 @@ export function useRoutes() {
             coordinates: riskyCoords,
             score: Math.max(0, 35 - penalty),
             distance: (d0*0.9/1000).toFixed(1),
+            durMin: Math.round(t0*0.85/60),
             duration: Math.round(t0*0.85/60),
             dist: (d0*0.9/1000).toFixed(1) + ' km',
             time: Math.round(t0*0.85/60) + ' min',
-            rawDistance: d0 * 0.9,
-            tags: ['⚠ High Risk',
-                   'Poor Lighting','No CCTV'],
+            tags: ['⚠ High Risk','Poor Lighting','No CCTV'],
             factors: [
-              {icon:'💡',
-               name:'Street Lighting',score:3},
-              {icon:'📹',
-               name:'CCTV Coverage',score:2},
-              {icon:'🚔',
-               name:'Police Proximity',score:3},
-              {icon:'👥',
-               name:'Crowd Density',score:4},
-              {icon:'📊',
-               name:'Crime History',score:2}
+              {icon:'💡', name:'Street Lighting',score:3},
+              {icon:'📹', name:'CCTV Coverage',score:2},
+              {icon:'🚔', name:'Police Proximity',score:3},
+              {icon:'👥', name:'Crowd Density',score:4},
+              {icon:'📊', name:'Crime History',score:2}
             ],
             confidence: 91
           }
         ].map(route => {
-          const savedContacts = JSON.parse(localStorage.getItem('trusted_contacts') || '[]')
+          const savedContacts = JSON.parse(localStorage.getItem('trusted_contacts') || '[]');
           return {
             ...route,
             nearbyContacts: findContactsNearRoute(route.coordinates, savedContacts)
-          }
-        })
+          };
+        });
+
+        finalRoutes = getRoutesByPreference(rawRoutes, preference);
       } catch (err) {
         console.log('OSRM failed:', err);
-        finalRoutes = generateMockRoutes(start, end, travelHour);
+        finalRoutes = getRoutesByPreference(generateMockRoutes(start, end, travelHour), preference);
       }
       
-      console.log('Routes count:', finalRoutes.length);
       setRoutes(finalRoutes);
     } catch (err) {
       if (err.message === 'GEOCODING_ERROR') {

@@ -148,9 +148,10 @@ const MapView = ({
             positions={route.coordinates || []}
             pathOptions={{
               color: route.color,
-              weight: isSelected ? 8 : route.weight,
-              opacity: noneSelected ? 0.85 : isSelected ? 1.0 : 0.2,
-              dashArray: isSelected ? null : route.dashArray,
+              // Recommended route is thick and solid, others are dashed
+              weight: isSelected ? 10 : (route.recommended ? 7 : 4),
+              opacity: noneSelected ? (route.recommended ? 1 : 0.6) : isSelected ? 1.0 : 0.2,
+              dashArray: route.recommended ? null : '8, 8',
               smoothFactor: 5,
               lineCap: 'round',
               lineJoin: 'round'
