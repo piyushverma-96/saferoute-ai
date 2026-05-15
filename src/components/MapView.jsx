@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import { MapContainer, TileLayer, Polyline, Marker, useMap, ZoomControl } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { isContactNearRoute } from '../utils/contactUtils'
 import { mockContacts, safeStops } from '../data/mockData'
 
 const getPointOnRoute = (coords, percentage) => {
@@ -29,19 +30,19 @@ const MapUpdater = ({
     const activeRoute = selectedRoute || (routes && routes[0]);
     if (!activeRoute?.coordinates) return;
 
-    // 3. Determine route index for online simulation
-    const routeIndex = routes.findIndex(r => r.id === activeRoute.id);
-
-    // 4. Show all trusted contacts that have lat/lng
+    // 3. Load contacts
     const savedContacts = JSON.parse(
       localStorage.getItem('trusted_contacts') || '[]'
     );
-    
-    const nearbyContacts = savedContacts.filter(
-      c => c.lat && c.lng
+
+    // 4. Filter contacts near THIS route only (3km threshold)
+    const nearbyContacts = savedContacts.filter(contact => 
+      isContactNearRoute(contact, activeRoute.coordinates, 3.0)
     );
 
-    // Draw all of them on map
+    console.log('Selected route contacts:', nearbyContacts.map(c => c.name));
+
+    // Draw markers for nearby contacts
     nearbyContacts.forEach(contact => {
       const marker = L.circleMarker([contact.lat, contact.lng], {
         radius: 12,
@@ -49,7 +50,8 @@ const MapUpdater = ({
         color: '#fff',
         weight: 2,
         fillOpacity: 1,
-        interactive: true
+        interactive: true,
+        zIndexOffset: 1000
       })
       .bindTooltip(`👤 ${contact.name}`, {
         permanent: true,

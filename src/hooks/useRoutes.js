@@ -14,7 +14,7 @@ const getDistanceKm = (lat1, lng1, lat2, lng2) => {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
 }
 
-const findContactsNearRoute = (routeCoords, contacts, thresholdKm = 5.0) => {
+const findContactsNearRoute = (routeCoords, contacts, thresholdKm = 3.0) => {
   const nearbyContacts = []
   
   contacts.forEach(contact => {

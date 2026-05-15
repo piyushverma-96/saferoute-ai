@@ -4,7 +4,7 @@ import { getContactsNearRoute } from '../utils/contactUtils'
 
 const RouteCard = ({ route, selected, onSelect, travelTime }) => {
   const [showAI, setShowAI] = useState(false)
-  const nearbyContacts = getContactsNearRoute(route.coordinates || [], 1.5)
+  const nearbyContacts = getContactsNearRoute(route.coordinates || [], 3.0)
   
   return (
     <div
@@ -158,7 +158,7 @@ const RouteCard = ({ route, selected, onSelect, travelTime }) => {
       {nearbyContacts.length > 0 ? (
         <div style={{
           marginTop: '10px',
-          padding: '8px 10px',
+          padding: '8px',
           background: 'rgba(124,58,237,0.1)',
           borderRadius: '8px',
           border: '1px solid #7c3aed'
@@ -169,7 +169,7 @@ const RouteCard = ({ route, selected, onSelect, travelTime }) => {
             fontWeight: '600',
             marginBottom: '6px'
           }}>
-            👥 Your contacts on this route:
+            👥 Contacts on this route:
           </div>
           {nearbyContacts.map((c, i) => (
             <div key={i} style={{
@@ -182,13 +182,7 @@ const RouteCard = ({ route, selected, onSelect, travelTime }) => {
                 fontSize: '12px',
                 color: '#e2e8f0'
               }}>
-                👤 {c.name} 
-                <span style={{
-                  color:'#64748b',
-                  fontSize:'11px'
-                }}>
-                  {' '}• {c.relation}
-                </span>
+                👤 {c.name} • {c.relation}
               </span>
               <a 
                 href={`tel:${c.phone}`}
@@ -196,11 +190,10 @@ const RouteCard = ({ route, selected, onSelect, travelTime }) => {
                 style={{
                   background: '#7c3aed',
                   color: 'white',
-                  padding: '3px 10px',
+                  padding: '3px 8px',
                   borderRadius: '4px',
                   fontSize: '11px',
-                  textDecoration: 'none',
-                  fontWeight: '500'
+                  textDecoration: 'none'
                 }}
               >
                 Call
