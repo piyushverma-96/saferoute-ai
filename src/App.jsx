@@ -155,8 +155,10 @@ function App() {
   const { isSOSActive, toggleSOS, closeSOS, userId } = useSOS();
 
   useEffect(() => {
-    const alreadyLoaded = localStorage.getItem('demo_contacts_loaded');
-    if (!alreadyLoaded) {
+    const existing = JSON.parse(localStorage.getItem('trusted_contacts') || '[]');
+    
+    // Only load demo if no contacts exist
+    if (existing.length === 0) {
       const DEMO_CONTACTS = [
         {
           id: 1,
@@ -196,7 +198,6 @@ function App() {
         }
       ];
       localStorage.setItem('trusted_contacts', JSON.stringify(DEMO_CONTACTS));
-      localStorage.setItem('demo_contacts_loaded', 'true');
       console.log('Demo contacts loaded ✅');
     }
   }, []);

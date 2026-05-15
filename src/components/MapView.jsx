@@ -32,67 +32,60 @@ const MapUpdater = ({
     // 3. Determine route index for online simulation
     const routeIndex = routes.findIndex(r => r.id === activeRoute.id);
 
-    // 4. Place stops on route
-    const stops = selectedRoute?.nearbyContacts || [];
-    stops.forEach((stop, i) => {
-      const point = [stop.lat, stop.lng];
-      if (!point[0] || !point[1]) return;
+    // 4. Show all trusted contacts that have lat/lng
+    const savedContacts = JSON.parse(
+      localStorage.getItem('trusted_contacts') || '[]'
+    );
+    
+    const nearbyContacts = savedContacts.filter(
+      c => c.lat && c.lng
+    );
 
-      const avatar = stop.relation?.toLowerCase().includes('mom') ? '👩' : 
-                   stop.relation?.toLowerCase().includes('sister') ? '👱‍♀️' :
-                   stop.relation?.toLowerCase().includes('friend') ? '👧' : '👤';
-
-      // Simulated logic: safest route = more "Safe Stop" label
-      const isOnline = routeIndex === 0 || (routeIndex === 1 && i < 2) || (routeIndex === 2 && i < 1);
-
-      // Stop marker HTML
-      const html = `
-        <div style="display: flex; flex-direction: column; align-items: center;">
-          <div style="width: 2px; height: 12px; background: #10b981;"></div>
-          
-          <div style="
-            background: #064e3b;
-            border: 2px solid #10b981;
-            border-radius: 12px;
-            padding: 6px 10px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            white-space: nowrap;
-          ">
-            <span style="font-size:16px">${avatar}</span>
-            <div>
-              <div style="color: white; font-size: 11px; font-weight: 600;">${stop.name}</div>
-              <div style="color: #10b981; font-size: 9px;">🟢 Safe Stop</div>
-            </div>
+    // Draw all of them on map
+    nearbyContacts.forEach(contact => {
+      const marker = L.circleMarker([contact.lat, contact.lng], {
+        radius: 12,
+        fillColor: '#7c3aed',
+        color: '#fff',
+        weight: 2,
+        fillOpacity: 1,
+        interactive: true
+      })
+      .bindTooltip(`👤 ${contact.name}`, {
+        permanent: true,
+        direction: 'top',
+        offset: [0, -14],
+        className: 'contact-label'
+      })
+      .bindPopup(`
+        <div style="background:#1a2332;color:white;
+          padding:12px;border-radius:10px;
+          min-width:170px;border:1px solid #7c3aed;
+          font-family:sans-serif;">
+          <div style="color:#a78bfa;font-weight:700;
+            font-size:14px;margin-bottom:6px;">
+            👤 ${contact.name}
           </div>
-        </div>
-      `;
-
-      const icon = L.divIcon({
-        html,
-        className: '',
-        iconSize: [80, 70],
-        iconAnchor: [40, 35]
-      });
-
-      const marker = L.marker(point, { icon }).addTo(map);
-
-      // Popup
-      marker.bindPopup(`
-        <div style="background: #1a2332; border-radius: 12px; padding: 16px; min-width: 180px; color: #f1f5f9;">
-          <div style="text-align: center; font-size: 32px; margin-bottom: 8px;">${avatar}</div>
-          <div style="font-weight: 600; font-size: 15px; text-align: center; margin-bottom: 4px;">${stop.name}</div>
-          <div style="color: #10b981; font-size: 12px; text-align: center; margin-bottom: 4px;">🟢 Safe Stop — ${stop.relation}</div>
-          <div style="color: #64748b; font-size: 11px; text-align: center; margin-bottom: 12px;">📍 ${stop.address}</div>
-          
-          <div style="display: flex; gap: 8px;">
-            <a href="tel:${stop.phone}" style="flex: 1; background: linear-gradient(135deg, #7c3aed, #ec4899); color: white; text-align: center; padding: 8px; border-radius: 8px; font-size: 12px; text-decoration: none; display: block;">📞 Call</a>
-            <a href="sms:${stop.phone}" style="flex: 1; background: #1e293b; border: 1px solid #374151; color: #94a3b8; text-align: center; padding: 8px; border-radius: 8px; font-size: 12px; text-decoration: none; display: block;">💬 SMS</a>
+          <div style="color:#94a3b8;font-size:12px;
+            margin-bottom:4px;">
+            📍 ${contact.address}
           </div>
+          <div style="color:#94a3b8;font-size:12px;
+            margin-bottom:10px;">
+            🔗 ${contact.relation}
+          </div>
+          <a href="tel:${contact.phone}" style="
+            display:block;
+            background:linear-gradient(135deg,#7c3aed,#ec4899);
+            color:white;text-align:center;
+            padding:8px;border-radius:6px;
+            text-decoration:none;font-size:13px;
+            font-weight:600;">
+            📞 Call ${contact.name}
+          </a>
         </div>
-      `, { className: 'dark-popup', maxWidth: 220 });
+      `)
+      .addTo(map);
 
       stopMarkersRef.current.push(marker);
     });

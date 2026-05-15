@@ -15,7 +15,7 @@ export const getDistanceKm = (lat1, lng1, lat2, lng2) => {
 
 // Check if a contact is within some km of any point on the route
 export const isContactNearRoute = (
-  contact, routeCoords, thresholdKm = 1.5
+  contact, routeCoords, thresholdKm = 5.0
 ) => {
   if (!contact.lat || !contact.lng) 
     return false
@@ -33,7 +33,7 @@ export const isContactNearRoute = (
 
 // Get all contacts near a route
 export const getContactsNearRoute = (
-  routeCoords, thresholdKm = 1.5
+  routeCoords, thresholdKm = 5.0
 ) => {
   try {
     const saved = localStorage.getItem(
