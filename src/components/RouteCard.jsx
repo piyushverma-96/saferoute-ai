@@ -4,7 +4,7 @@ import { getContactsNearRoute } from '../utils/contactUtils'
 
 const RouteCard = ({ route, selected, onClick, travelTime }) => {
   const [showAI, setShowAI] = useState(false)
-  const nearbyContacts = getContactsNearRoute(route.coordinates || [], 3.0)
+  const nearbyContacts = JSON.parse(localStorage.getItem('trusted_contacts') || '[]')
   
   return (
     <div

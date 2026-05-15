@@ -462,7 +462,7 @@ export default function Sidebar({
                 justifyContent: 'space-between',
                 gap: '6px'
               }}>
-                <span className="flex items-center gap-1.5">🛡 Safe Stops On Route</span>
+                <span className="flex items-center gap-1.5">🛡 Safe Contacts On Route</span>
                 <span style={{
                   background: '#7c3aed',
                   color: 'white',
@@ -470,10 +470,7 @@ export default function Sidebar({
                   padding: '1px 6px',
                   borderRadius: '10px'
                 }}>
-                  {safeStops.map((stop, i) => ({
-                    ...stop,
-                    isOnline: selectedRouteIndex === 0 ? true : (selectedRouteIndex === 1 ? i < 2 : i < 1)
-                  })).filter(s => s.isOnline).length} online
+                  {JSON.parse(localStorage.getItem('trusted_contacts') || '[]').length} total
                 </span>
               </div>
 
@@ -503,10 +500,10 @@ export default function Sidebar({
                   position: 'relative',
                   margin: '0 8px'
                 }}>
-                  {safeStops.map((stop, i) => (
+                  {JSON.parse(localStorage.getItem('trusted_contacts') || '[]').map((contact, i, arr) => (
                     <div key={i} style={{
                       position: 'absolute',
-                      left: `${stop.position * 100}%`,
+                      left: `${((i + 1) / (arr.length + 1)) * 100}%`,
                       top: '50%',
                       transform: 'translate(-50%,-50%)',
                       width: '18px',
@@ -520,7 +517,9 @@ export default function Sidebar({
                       fontSize: '10px',
                       boxShadow: '0 0 5px rgba(0,0,0,0.3)'
                     }}>
-                      {stop.avatar}
+                      {contact.relation?.toLowerCase().includes('mom') ? '👩' : 
+                       contact.relation?.toLowerCase().includes('sister') ? '👱‍♀️' :
+                       contact.relation?.toLowerCase().includes('friend') ? '👧' : '👤'}
                     </div>
                   ))}
                 </div>
@@ -544,8 +543,11 @@ export default function Sidebar({
                 paddingBottom: isMobile ? '12px' : '0',
                 scrollbarWidth: 'none'
               }} className="no-scrollbar">
-                {safeStops.map((stop, i) => {
+                {JSON.parse(localStorage.getItem('trusted_contacts') || '[]').map((stop, i) => {
                   const isOnline = selectedRouteIndex === 0 ? true : (selectedRouteIndex === 1 ? i < 2 : i < 1);
+                  const avatar = stop.relation?.toLowerCase().includes('mom') ? '👩' : 
+                               stop.relation?.toLowerCase().includes('sister') ? '👱‍♀️' :
+                               stop.relation?.toLowerCase().includes('friend') ? '👧' : '👤';
                   return (
                     <div key={stop.id} style={{
                       display: 'flex',
@@ -578,13 +580,13 @@ export default function Sidebar({
                         </div>
                       )}
 
-                      <div style={{ fontSize: '22px', flexShrink: 0 }}>{stop.avatar}</div>
+                      <div style={{ fontSize: '22px', flexShrink: 0 }}>{avatar}</div>
                       
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ color: '#f1f5f9', fontSize: '13px', fontWeight: '600' }}>{stop.name}</div>
                         {!isMobile && (
                           <div style={{ color: '#64748b', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            📍 {stop.address}
+                            📍 {stop.relation}
                           </div>
                         )}
                         <div style={{ 
