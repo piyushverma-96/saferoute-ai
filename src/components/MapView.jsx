@@ -9,16 +9,64 @@ const MOCK_CONTACTS = [
   { name: 'Colleague', phone: '9988776655', relation: 'Colleague', address: 'Rajwada, Indore', lat: 22.7196, lng: 75.8411 }
 ]
 
-// Map updater component
 const MapUpdater = ({ 
   selectedRoute, 
   userCoords,
   routes
 }) => {
   const map = useMap()
-  const contactMarkersRef = useRef([])
-  
-  // Handle route bounds
+
+  // ── CONTACTS – paste right after polylines ──
+  const CONTACTS = [
+    {
+      name: 'Mom',
+      phone: '9876543210',
+      relation: 'Family',
+      address: 'Vijay Nagar, Indore',
+      lat: 22.7533,
+      lng: 75.8937
+    },
+    {
+      name: 'Best Friend', 
+      phone: '9123456789',
+      relation: 'Friend',
+      address: 'Palasia, Indore',
+      lat: 22.7196,
+      lng: 75.8577
+    },
+    {
+      name: 'Colleague',
+      phone: '9988776655',
+      relation: 'Colleague',
+      address: 'Rajwada, Indore',
+      lat: 22.7300,
+      lng: 75.8700
+    }
+  ]
+
+  CONTACTS.forEach(c => {
+    L.circleMarker([c.lat, c.lng], {
+      radius: 12,
+      fillColor: '#7c3aed',
+      color: '#ffffff',
+      weight: 2,
+      fillOpacity: 1
+    })
+    .bindPopup(`
+      <b style="color:#7c3aed">👤 ${c.name}</b><br/>
+      📍 ${c.address}<br/>
+      🔗 ${c.relation}<br/><br/>
+      <a href="tel:${c.phone}" 
+        style="background:#7c3aed;color:white;
+        padding:6px 12px;border-radius:6px;
+        text-decoration:none;font-size:12px">
+        📞 Call ${c.name}
+      </a>
+    `)
+    .addTo(map)
+  })
+  // ── END CONTACTS ──
+
   useEffect(() => {
     if (!map || !routes?.length) return
     const allCoords = routes.flatMap(r => r.coordinates || [])
@@ -30,7 +78,6 @@ const MapUpdater = ({
     }
   }, [routes, map])
 
-  // Handle selected route focus
   useEffect(() => {
     if (!map || !selectedRoute) return
     if (selectedRoute?.coordinates?.length > 0) {
@@ -40,102 +87,6 @@ const MapUpdater = ({
       } catch(e) { console.log('bounds error:', e) }
     }
   }, [selectedRoute, map])
-
-  // CONTACT MARKERS EFFECT - Runs when routes change
-  useEffect(() => {
-    if (!map) return
-    if (!routes || routes.length === 0) return
-
-    // 1. Remove old contact markers
-    contactMarkersRef.current.forEach(m => map.removeLayer(m))
-    contactMarkersRef.current = []
-
-    // 2. Get contacts from localStorage or mock
-    const saved = localStorage.getItem('trusted_contacts')
-    const contacts = saved ? JSON.parse(saved) : MOCK_CONTACTS
-
-    // 3. Save mock if nothing saved
-    if (!saved) {
-      localStorage.setItem('trusted_contacts', JSON.stringify(MOCK_CONTACTS))
-    }
-
-    // 4. Add each contact marker
-    contacts.forEach(contact => {
-      if (!contact.lat || !contact.lng) return
-
-      // Purple circle marker
-      const marker = L.circleMarker(
-        [contact.lat, contact.lng],
-        {
-          radius: 10,
-          fillColor: '#7c3aed',
-          color: '#fff',
-          weight: 2,
-          fillOpacity: 1,
-          interactive: true
-        }
-      )
-
-      // Popup
-      const popupHTML = `
-        <div style="
-          background:#1a2332;
-          color:white;
-          padding:12px;
-          border-radius:10px;
-          min-width:170px;
-          border:1px solid #7c3aed;
-          font-family:sans-serif;
-        ">
-          <div style="
-            color:#a78bfa;
-            font-weight:600;
-            font-size:14px;
-            margin-bottom:6px;
-          ">👤 ${contact.name}</div>
-          <div style="
-            color:#94a3b8;
-            font-size:12px;
-            margin-bottom:3px;
-          ">📍 ${contact.address}</div>
-          <div style="
-            color:#94a3b8;
-            font-size:12px;
-            margin-bottom:10px;
-          ">🔗 ${contact.relation}</div>
-          <a href="tel:${contact.phone}"
-            style="
-              display:block;
-              background:linear-gradient(135deg,#7c3aed,#ec4899);
-              color:white;
-              text-align:center;
-              padding:8px;
-              border-radius:6px;
-              text-decoration:none;
-              font-size:12px;
-              font-weight:500;
-            "
-          >📞 Call ${contact.name}</a>
-        </div>
-      `
-
-      marker.bindPopup(popupHTML, {
-        maxWidth: 200,
-        className: 'contact-popup'
-      })
-
-      // Permanent name label
-      marker.bindTooltip(contact.name, {
-        permanent: true,
-        direction: 'top',
-        offset: [0, -12],
-        className: 'contact-label'
-      })
-
-      marker.addTo(map)
-      contactMarkersRef.current.push(marker)
-    })
-  }, [routes, map])
 
   useEffect(() => {
     if (!map) return
