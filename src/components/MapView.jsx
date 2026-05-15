@@ -138,6 +138,7 @@ const MapUpdater = ({
 
 const MapView = ({
   routes = [],
+  selectedRoute = null,
   selectedRouteIndex = 0,
   onRouteSelect,
   startCoords,
@@ -163,7 +164,7 @@ const MapView = ({
         routes={routes}
       />
       
-      {routes.map((route) => {
+      {routes.map((route, index) => {
         const isSelected = selectedRoute?.id === route.id
         const noneSelected = !selectedRoute
         
@@ -181,7 +182,7 @@ const MapView = ({
               lineCap: 'round',
               lineJoin: 'round'
             }}
-            eventHandlers={{ click: () => onRouteSelect && onRouteSelect(route) }}
+            eventHandlers={{ click: () => onRouteSelect && onRouteSelect(index) }}
           />
         )
       })}
