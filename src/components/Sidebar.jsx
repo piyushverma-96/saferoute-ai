@@ -459,9 +459,10 @@ export default function Sidebar({
                 marginBottom: '12px',
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'space-between',
                 gap: '6px'
               }}>
-                🛡 Safe Contacts On Your Route
+                <span className="flex items-center gap-1.5">🛡 Safe Stops On Route</span>
                 <span style={{
                   background: '#7c3aed',
                   color: 'white',
@@ -469,7 +470,10 @@ export default function Sidebar({
                   padding: '1px 6px',
                   borderRadius: '10px'
                 }}>
-                  {(selectedRoute.nearbyContacts || []).length} total
+                  {safeStops.map((stop, i) => ({
+                    ...stop,
+                    isOnline: selectedRouteIndex === 0 ? true : (selectedRouteIndex === 1 ? i < 2 : i < 1)
+                  })).filter(s => s.isOnline).length} online
                 </span>
               </div>
 
@@ -496,20 +500,28 @@ export default function Sidebar({
                   flex: 1,
                   height: '2px',
                   background: 'rgba(255,255,255,0.1)',
-                  margin: '0 8px',
                   position: 'relative',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-evenly'
+                  margin: '0 8px'
                 }}>
-                  {(selectedRoute.nearbyContacts || []).map((stop, i) => (
+                  {safeStops.map((stop, i) => (
                     <div key={i} style={{
-                      width: '6px',
-                      height: '6px',
+                      position: 'absolute',
+                      left: `${stop.position * 100}%`,
+                      top: '50%',
+                      transform: 'translate(-50%,-50%)',
+                      width: '18px',
+                      height: '18px',
                       borderRadius: '50%',
-                      background: '#7c3aed',
-                      border: '2px solid #0f1724'
-                    }} />
+                      background: (selectedRouteIndex === 0 ? true : (selectedRouteIndex === 1 ? i < 2 : i < 1)) ? '#10b981' : '#374151',
+                      border: '2px solid #0f1724',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '10px',
+                      boxShadow: '0 0 5px rgba(0,0,0,0.3)'
+                    }}>
+                      {stop.avatar}
+                    </div>
                   ))}
                 </div>
                 
@@ -529,50 +541,94 @@ export default function Sidebar({
                 flexDirection: isMobile ? 'row' : 'column', 
                 gap: '8px',
                 overflowX: isMobile ? 'auto' : 'visible',
-                paddingBottom: isMobile ? '8px' : '0'
-              }}>
-                {(selectedRoute.nearbyContacts || []).length === 0 ? (
-                  <div style={{ color: '#64748b', fontSize: '12px', padding: '10px', textAlign: 'center', width: '100%' }}>
-                    No trusted contacts along this route.
-                  </div>
-                ) : (
-                  (selectedRoute.nearbyContacts || []).map((stop, i) => {
-                    const avatar = stop.relation?.toLowerCase().includes('mom') ? '👩' : 
-                                 stop.relation?.toLowerCase().includes('sister') ? '👱‍♀️' :
-                                 stop.relation?.toLowerCase().includes('friend') ? '👧' : '👤';
-                    
-                    return (
-                      <div key={stop.id} style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        padding: '10px',
-                        background: '#0f1724',
-                        borderRadius: '10px',
-                        border: '1px solid rgba(124,58,237,0.2)',
-                        minWidth: isMobile ? '160px' : 'auto'
-                      }}>
-                        <div style={{ fontSize: '22px', flexShrink: 0 }}>{avatar}</div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ color: '#f1f5f9', fontSize: '13px', fontWeight: '600' }}>{stop.name}</div>
-                          <div style={{ color: '#64748b', fontSize: '11px' }}>{stop.relation}</div>
-                        </div>
-                        <a href={`tel:${stop.phone}`} style={{
-                          width: '28px',
-                          height: '28px',
-                          background: 'rgba(124,58,237,0.2)',
-                          border: '1px solid #7c3aed',
-                          borderRadius: '8px',
+                paddingBottom: isMobile ? '12px' : '0',
+                scrollbarWidth: 'none'
+              }} className="no-scrollbar">
+                {safeStops.map((stop, i) => {
+                  const isOnline = selectedRouteIndex === 0 ? true : (selectedRouteIndex === 1 ? i < 2 : i < 1);
+                  return (
+                    <div key={stop.id} style={{
+                      display: 'flex',
+                      flexDirection: isMobile ? 'column' : 'row',
+                      alignItems: isMobile ? 'center' : 'center',
+                      gap: '10px',
+                      padding: '10px',
+                      background: '#0f1724',
+                      borderRadius: '10px',
+                      border: `1px solid ${isOnline ? 'rgba(16,185,129,0.2)' : '#1e293b'}`,
+                      minWidth: isMobile ? '130px' : 'auto',
+                      textAlign: isMobile ? 'center' : 'left'
+                    }}>
+                      {/* Stop number - only on desktop */}
+                      {!isMobile && (
+                        <div style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '50%',
+                          background: '#7c3aed',
+                          color: 'white',
+                          fontSize: '10px',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          textDecoration: 'none',
-                          color: '#a78bfa'
-                        }}>📞</a>
+                          fontWeight: '600',
+                          flexShrink: 0
+                        }}>
+                          {i + 1}
+                        </div>
+                      )}
+
+                      <div style={{ fontSize: '22px', flexShrink: 0 }}>{stop.avatar}</div>
+                      
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ color: '#f1f5f9', fontSize: '13px', fontWeight: '600' }}>{stop.name}</div>
+                        {!isMobile && (
+                          <div style={{ color: '#64748b', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            📍 {stop.address}
+                          </div>
+                        )}
+                        <div style={{ 
+                          color: isOnline ? '#10b981' : '#64748b', 
+                          fontSize: '10px',
+                          marginTop: '1px'
+                        }}>
+                          {isOnline ? '🟢 Safe Stop' : '⚫ Offline'}
+                        </div>
                       </div>
-                    );
-                  })
-                )}
+
+                      <div style={{ display: 'flex', gap: '6px', width: isMobile ? '100%' : 'auto' }}>
+                        <a href={`tel:${stop.phone}`} style={{
+                          flex: 1,
+                          background: isOnline ? 'rgba(16,185,129,0.15)' : '#1e293b',
+                          border: `1px solid ${isOnline ? '#10b981' : '#374151'}`,
+                          borderRadius: '8px',
+                          padding: '6px 10px',
+                          color: isOnline ? '#10b981' : '#64748b',
+                          fontSize: '14px',
+                          textDecoration: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>📞</a>
+                        {isMobile && (
+                          <a href={`sms:${stop.phone}`} style={{
+                            flex: 1,
+                            background: '#1e293b',
+                            border: '1px solid #374151',
+                            borderRadius: '8px',
+                            padding: '6px 10px',
+                            color: '#94a3b8',
+                            fontSize: '14px',
+                            textDecoration: 'none',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>💬</a>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Safety tip */}

@@ -18,6 +18,7 @@ const MapUpdater = ({
 }) => {
   const map = useMap();
   const contactMarkersRef = useRef([]);
+  const stopMarkersRef = useRef([]);
 
   const updateContactsForRoute = (map, routeCoords) => {
     // 1. Purane contact markers hatao
@@ -46,8 +47,6 @@ const MapUpdater = ({
         return dist <= 3.0; // 3km threshold
       });
     });
-
-    console.log(`Contacts for route ${selectedRouteIndex}:`, nearby.map(c => c.name));
 
     // 4. Filtered contacts ke markers lagao
     nearby.forEach(contact => {
@@ -92,6 +91,59 @@ const MapUpdater = ({
     });
   };
 
+  const showSafeStops = (map, routeCoords, routeIdx) => {
+    // Clear old stops
+    stopMarkersRef.current.forEach(m => map.removeLayer(m));
+    stopMarkersRef.current = [];
+
+    if (!routeCoords || routeCoords.length === 0) return;
+
+    // Define safe stops with dynamic online status based on route
+    // Safest (0) = 3 online, Balanced (1) = 2 online, High Risk (2) = 1 online
+    const routeSafeStops = safeStops.map((stop, i) => ({
+      ...stop,
+      isOnline: routeIdx === 0 ? true : (routeIdx === 1 ? i < 2 : i < 1)
+    }));
+
+    routeSafeStops.forEach((stop, i) => {
+      const point = getPointOnRoute(routeCoords, stop.position);
+      if (!point) return;
+
+      const html = `
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <div style="width: 2px; height: 12px; background: ${stop.isOnline ? '#10b981' : '#64748b'};"></div>
+          <div style="background: ${stop.isOnline ? '#064e3b' : '#1e293b'}; border: 2px solid ${stop.isOnline ? '#10b981' : '#64748b'}; border-radius: 12px; padding: 6px 10px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); white-space: nowrap;">
+            <span style="font-size:16px">${stop.avatar}</span>
+            <div>
+              <div style="color: white; font-size: 11px; font-weight: 600;">${stop.name}</div>
+              <div style="color: ${stop.isOnline ? '#10b981' : '#94a3b8'}; font-size: 9px;">${stop.isOnline ? '🟢 Safe Stop' : '⚫ Offline'}</div>
+            </div>
+          </div>
+          <div style="background: #7c3aed; color: white; font-size: 9px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: 2px; font-weight: 600;">${i + 1}</div>
+        </div>
+      `;
+
+      const icon = L.divIcon({ html, className: '', iconSize: [80, 70], iconAnchor: [40, 35] });
+      const marker = L.marker(point, { icon }).addTo(map);
+
+      marker.bindPopup(`
+        <div style="background: #1a2332; border-radius: 12px; padding: 16px; min-width: 180px; color: #f1f5f9;">
+          <div style="text-align: center; font-size: 32px; margin-bottom: 8px;">${stop.avatar}</div>
+          <div style="font-weight: 600; font-size: 15px; text-align: center; margin-bottom: 4px;">${stop.name}</div>
+          <div style="color: ${stop.isOnline ? '#10b981' : '#64748b'}; font-size: 12px; text-align: center; margin-bottom: 4px;">${stop.isOnline ? '🟢 Online — Safe Stop' : '⚫ Offline'}</div>
+          <div style="color: #64748b; font-size: 11px; text-align: center; margin-bottom: 12px;">📍 ${stop.address}</div>
+          <div style="color: #94a3b8; font-size: 11px; background: rgba(124,58,237,0.1); border: 1px solid #7c3aed; border-radius: 8px; padding: 8px; text-align: center; margin-bottom: 10px;">🛡 You can safely stop here if needed</div>
+          <div style="display: flex; gap: 8px;">
+            <a href="tel:${stop.phone}" style="flex: 1; background: linear-gradient(135deg, #7c3aed, #ec4899); color: white; text-align: center; padding: 8px; border-radius: 8px; font-size: 12px; text-decoration: none; display: block;">📞 Call</a>
+            <a href="sms:${stop.phone}" style="flex: 1; background: #1e293b; border: 1px solid #374151; color: #94a3b8; text-align: center; padding: 8px; border-radius: 8px; font-size: 12px; text-decoration: none; display: block;">💬 SMS</a>
+          </div>
+        </div>
+      `, { className: 'dark-popup', maxWidth: 220 });
+
+      stopMarkersRef.current.push(marker);
+    });
+  };
+
   useEffect(() => {
     if (!map || !routes || routes.length === 0) return;
     
@@ -99,6 +151,7 @@ const MapUpdater = ({
     const activeRoute = routes[selectedRouteIndex] || routes[0];
     if (activeRoute?.coordinates) {
       updateContactsForRoute(map, activeRoute.coordinates);
+      showSafeStops(map, activeRoute.coordinates, selectedRouteIndex);
     }
   }, [map, selectedRouteIndex, routes]);
 
