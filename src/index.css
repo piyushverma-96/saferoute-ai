@@ -125,10 +125,11 @@
   border: 1px solid #7c3aed !important;
   color: #a78bfa !important;
   font-size: 11px !important;
-  padding: 2px 8px !important;
+  font-weight: 600 !important;
+  padding: 3px 8px !important;
   border-radius: 10px !important;
   white-space: nowrap !important;
-  box-shadow: none !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
 }
 
 .contact-label::before {

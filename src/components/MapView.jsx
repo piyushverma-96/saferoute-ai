@@ -2,26 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import { MapContainer, TileLayer, Polyline, Marker, useMap, ZoomControl } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-
-// Distance calculator (Haversine)
-const getDistanceKm = (lat1, lng1, lat2, lng2) => {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng / 2) * Math.sin(dLng / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-};
-
-// Check if contact is near route path
-const isContactNearRoute = (contact, routeCoords) => {
-  if (!contact.lat || !contact.lng || !routeCoords?.length) return false;
-  return routeCoords.some(([lat, lng]) => {
-    return getDistanceKm(lat, lng, contact.lat, contact.lng) <= 1.0; // 1km threshold
-  });
-};
+import { getContactsNearRoute } from '../utils/contactUtils'
 
 const MapUpdater = ({ 
   selectedRoute, 
@@ -42,38 +23,38 @@ const MapUpdater = ({
     const activeRoute = selectedRoute || (routes && routes[0]);
     if (!activeRoute?.coordinates) return;
 
-    // 3. Load user's real saved contacts
-    const savedContacts = JSON.parse(localStorage.getItem('trusted_contacts') || '[]');
-    if (savedContacts.length === 0) return;
+    // 3. Get contacts near this route using utility
+    const nearbyContacts = getContactsNearRoute(activeRoute.coordinates, 1.5);
+    
+    if (nearbyContacts.length === 0) return;
 
-    // 4. Filter and add markers
-    savedContacts.forEach(contact => {
-      if (!isContactNearRoute(contact, activeRoute.coordinates)) return;
-
+    // 4. Add markers for each nearby contact
+    nearbyContacts.forEach(contact => {
       const marker = L.circleMarker([contact.lat, contact.lng], {
-        radius: 12,
+        radius: 13,
         fillColor: '#7c3aed',
         color: '#ffffff',
-        weight: 2,
+        weight: 3,
         fillOpacity: 1,
-        interactive: true
+        interactive: true,
+        zIndexOffset: 1000
       })
-      .bindTooltip(contact.name, {
+      .bindTooltip(`👤 ${contact.name}`, {
         permanent: true,
         direction: 'top',
-        offset: [0, -14],
+        offset: [0, -16],
         className: 'contact-label'
       })
       .bindPopup(`
-        <div style="background:#1a2332; color:white; padding:12px; border-radius:10px; min-width:170px; border:1px solid #7c3aed; font-family:sans-serif;">
-          <div style="color:#a78bfa; font-weight:600; font-size:14px; margin-bottom:6px;">👤 ${contact.name}</div>
+        <div style="background:#1a2332; color:white; padding:14px; border-radius:12px; min-width:180px; border:1px solid #7c3aed; font-family:sans-serif;">
+          <div style="color:#a78bfa; font-weight:700; font-size:15px; margin-bottom:8px;">👤 ${contact.name}</div>
           <div style="color:#94a3b8; font-size:12px; margin-bottom:4px;">📍 ${contact.address}</div>
-          <div style="color:#94a3b8; font-size:12px; margin-bottom:10px;">🔗 ${contact.relation}</div>
-          <a href="tel:${contact.phone}" style="display:block; background:linear-gradient(135deg,#7c3aed,#ec4899); color:white; text-align:center; padding:8px; border-radius:6px; text-decoration:none; font-size:13px; font-weight:500;">
+          <div style="color:#94a3b8; font-size:12px; margin-bottom:12px;">🔗 ${contact.relation}</div>
+          <a href="tel:${contact.phone}" style="display:block; background:linear-gradient(135deg,#7c3aed,#ec4899); color:white; text-align:center; padding:10px; border-radius:8px; text-decoration:none; font-size:13px; font-weight:600;">
             📞 Call ${contact.name}
           </a>
         </div>
-      `);
+      `, { maxWidth: 220 });
 
       marker.addTo(map);
       contactMarkersRef.current.push(marker);

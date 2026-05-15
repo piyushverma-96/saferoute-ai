@@ -1,32 +1,10 @@
 import React, { useState } from 'react';
 
-const getDistanceKm = (lat1, lng1, lat2, lng2) => {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng / 2) * Math.sin(dLng / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-};
-
-const getNearbyContacts = (routeCoords) => {
-  const contacts = JSON.parse(
-    localStorage.getItem('trusted_contacts') || '[]'
-  );
-
-  return contacts.filter(contact => {
-    if (!contact.lat || !contact.lng) return false;
-    return routeCoords.some(([lat, lng]) =>
-      getDistanceKm(lat, lng, contact.lat, contact.lng) <= 1.0
-    );
-  });
-};
+import { getContactsNearRoute } from '../utils/contactUtils'
 
 const RouteCard = ({ route, selected, onSelect, travelTime }) => {
   const [showAI, setShowAI] = useState(false)
-  const nearbyContacts = getNearbyContacts(route.coordinates || [])
+  const nearbyContacts = getContactsNearRoute(route.coordinates || [], 1.5)
   
   return (
     <div
@@ -177,10 +155,10 @@ const RouteCard = ({ route, selected, onSelect, travelTime }) => {
       </div>
 
       {/* NEARBY CONTACTS */}
-      {nearbyContacts.length > 0 && (
+      {nearbyContacts.length > 0 ? (
         <div style={{
           marginTop: '10px',
-          padding: '8px',
+          padding: '8px 10px',
           background: 'rgba(124,58,237,0.1)',
           borderRadius: '8px',
           border: '1px solid #7c3aed'
@@ -188,10 +166,10 @@ const RouteCard = ({ route, selected, onSelect, travelTime }) => {
           <div style={{
             fontSize: '11px',
             color: '#a78bfa',
-            marginBottom: '6px',
-            fontWeight: '500'
+            fontWeight: '600',
+            marginBottom: '6px'
           }}>
-            👥 Contacts on this route:
+            👥 Your contacts on this route:
           </div>
           {nearbyContacts.map((c, i) => (
             <div key={i} style={{
@@ -204,7 +182,13 @@ const RouteCard = ({ route, selected, onSelect, travelTime }) => {
                 fontSize: '12px',
                 color: '#e2e8f0'
               }}>
-                👤 {c.name}
+                👤 {c.name} 
+                <span style={{
+                  color:'#64748b',
+                  fontSize:'11px'
+                }}>
+                  {' '}• {c.relation}
+                </span>
               </span>
               <a 
                 href={`tel:${c.phone}`}
@@ -212,16 +196,26 @@ const RouteCard = ({ route, selected, onSelect, travelTime }) => {
                 style={{
                   background: '#7c3aed',
                   color: 'white',
-                  padding: '3px 8px',
+                  padding: '3px 10px',
                   borderRadius: '4px',
                   fontSize: '11px',
-                  textDecoration: 'none'
+                  textDecoration: 'none',
+                  fontWeight: '500'
                 }}
               >
                 Call
               </a>
             </div>
           ))}
+        </div>
+      ) : (
+        <div style={{
+          marginTop: '8px',
+          fontSize: '11px',
+          color: '#374151',
+          textAlign: 'center'
+        }}>
+          No contacts near this route
         </div>
       )}
 

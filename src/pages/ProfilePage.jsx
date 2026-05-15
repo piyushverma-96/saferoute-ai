@@ -56,47 +56,65 @@ const ContactManager = () => {
     return null
   }
 
+  const loadDemoContacts = () => {
+    const DEMO_CONTACTS = [
+      { id: 1, name: 'Mom', phone: '9876543210', relation: 'Family', address: 'Pithampur, Madhya Pradesh', lat: 22.6177, lng: 75.6953 },
+      { id: 2, name: 'Best Friend', phone: '9123456789', relation: 'Friend', address: 'Mhow, Indore', lat: 22.5518, lng: 75.7587 },
+      { id: 3, name: 'Uncle', phone: '9988776655', relation: 'Family', address: 'Sanwer, Indore', lat: 22.9728, lng: 75.8309 },
+      { id: 4, name: 'Colleague', phone: '9876512345', relation: 'Work', address: 'Vijay Nagar, Indore', lat: 22.7533, lng: 75.8937 }
+    ]
+    localStorage.setItem('trusted_contacts', JSON.stringify(DEMO_CONTACTS))
+    setContacts(DEMO_CONTACTS)
+    alert('Demo contacts loaded ✅\nNow go to Map and search any route!')
+  }
+
   const addContact = async (e) => {
     e.preventDefault()
-    if (!newContact.name || !newContact.phone) return
-    setLoading(true)
-    
-    let location = { lat: null, lng: null }
-    if (newContact.address) {
-      const geo = await geocodeAddress(newContact.address)
-      if (geo) location = geo
+    if (!newContact.name || !newContact.phone) {
+      alert('Name and phone required!')
+      return
     }
-    
+
+    setLoading(true)
+    let lat = null, lng = null
+
+    if (newContact.address) {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(newContact.address)}&format=json&limit=1`
+        )
+        const data = await res.json()
+        if (data[0]) {
+          lat = parseFloat(data[0].lat)
+          lng = parseFloat(data[0].lon)
+        }
+      } catch(e) {
+        console.error('Geocode error:', e)
+      }
+    }
+
     const contact = {
       id: Date.now(),
       name: newContact.name,
       phone: newContact.phone,
-      relation: newContact.relation,
-      address: newContact.address,
-      lat: location.lat,
-      lng: location.lng
+      relation: newContact.relation || 'Contact',
+      address: newContact.address || '',
+      lat,
+      lng
     }
-    
+
     const updated = [...contacts, contact]
     setContacts(updated)
     localStorage.setItem('trusted_contacts', JSON.stringify(updated))
-    
+
+    alert(`${contact.name} added! ${
+      lat ? 'Location found ✅' 
+          : '❌ Location not found - be more specific'
+    }`)
+
     setNewContact({ name:'', phone:'', relation:'', address:'', lat:null, lng:null })
     setIsAdding(false)
     setLoading(false)
-    
-    alert(`${contact.name} added! ${location.lat ? 'Location found ✅' : 'No location found - try adding "Indore" to address'}`)
-  }
-
-  const loadDemoContacts = () => {
-    const demoContacts = [
-      { id: 1, name: 'Mom', phone: '9876543210', relation: 'Family', address: 'Mhow, Indore', lat: 22.5518, lng: 75.7587 },
-      { id: 2, name: 'Best Friend', phone: '9123456789', relation: 'Friend', address: 'Pithampur, Indore', lat: 22.6177, lng: 75.6953 },
-      { id: 3, name: 'Uncle', phone: '9988776655', relation: 'Family', address: 'Sanwer Road, Indore', lat: 22.6800, lng: 75.8100 }
-    ]
-    localStorage.setItem('trusted_contacts', JSON.stringify(demoContacts))
-    setContacts(demoContacts)
-    alert('Demo contacts loaded! Search Indore → Pithampur route to see them on map ✅')
   }
 
   return (
