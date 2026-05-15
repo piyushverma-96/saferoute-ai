@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Shield, Map, LayoutDashboard, Flag, User, Menu, X, LogOut, LogIn } from 'lucide-react';
 import { useSOS } from '../hooks/useSOS';
+import InstallButton from './InstallButton';
 
 export default function Navbar({ onToggleSOS }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -61,7 +62,9 @@ export default function Navbar({ onToggleSOS }) {
           </div>
 
           {/* Right Side - SOS & Mobile Toggle */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <InstallButton variant="navbar" />
+            
             <button
               onClick={onToggleSOS}
               className="flex items-center gap-2 bg-brand-danger/10 text-brand-danger border border-brand-danger/50 px-4 py-2 rounded-full font-bold text-sm hover:bg-brand-danger hover:text-white transition-all duration-300"

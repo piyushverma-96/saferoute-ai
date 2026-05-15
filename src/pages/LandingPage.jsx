@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Shield, Play, Map, AlertTriangle, Radio, Users, MapPin, Brain, ShieldCheck } from 'lucide-react';
 import SOSModal from '../components/SOSModal';
+import InstallButton from '../components/InstallButton';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -63,6 +64,8 @@ export default function LandingPage() {
               Try Demo
             </button>
           </div>
+
+          <InstallButton variant="banner" />
         </div>
 
         {/* Feature Strip */}

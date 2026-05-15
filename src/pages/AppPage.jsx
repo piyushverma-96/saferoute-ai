@@ -4,6 +4,7 @@ import Sidebar from '../components/Sidebar';
 import MapView from '../components/MapView';
 import { useRoutes } from '../hooks/useRoutes';
 import { useVoiceNavigation } from '../hooks/useVoiceNavigation';
+import InstallButton from '../components/InstallButton';
 
 export default function AppPage() {
   const [startQuery, setStartQuery] = useState('');
@@ -327,6 +328,8 @@ export default function AppPage() {
           </div>
         </>
       )}
+      
+      <InstallButton variant="floating" />
     </div>
   );
 }

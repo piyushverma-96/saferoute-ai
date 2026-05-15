@@ -54,12 +54,20 @@ export default function Toast() {
         >
           {getIcon(toast.severity)}
           <div className="flex-1 min-w-0 pr-4">
-            <h4 className="text-sm font-bold text-brand-text-primary truncate">
-              🚨 New report: {toast.type}
-            </h4>
-            <p className="text-xs text-brand-text-secondary mt-1 truncate">
-              at {toast.location}
-            </p>
+            {toast.message ? (
+              <p className="text-sm font-medium text-brand-text-primary leading-relaxed">
+                {toast.message}
+              </p>
+            ) : (
+              <>
+                <h4 className="text-sm font-bold text-brand-text-primary truncate">
+                  🚨 New report: {toast.type}
+                </h4>
+                <p className="text-xs text-brand-text-secondary mt-1 truncate">
+                  at {toast.location}
+                </p>
+              </>
+            )}
           </div>
           <button 
             onClick={() => removeToast(toast.toastId)}
