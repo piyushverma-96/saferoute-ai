@@ -23,192 +23,293 @@ const geocodeContact = async (address) => {
 }
 
 const ContactManager = () => {
-  const [contacts, setContacts] = useState(() => {
-    return JSON.parse(localStorage.getItem('trusted_contacts') || '[]')
-  })
-  const [isAdding, setIsAdding] = useState(false)
-  const [newContact, setNewContact] = useState({
+  const [contacts, setContacts] = useState(() =>
+    JSON.parse(localStorage.getItem('trusted_contacts') || '[]')
+  );
+
+  const [form, setForm] = useState({
     name: '',
     phone: '',
     relation: '',
-    address: '',
-    lat: null,
-    lng: null
-  })
-  const [loading, setLoading] = useState(false)
+    address: ''
+  });
 
-  const geocodeAddress = async (address) => {
-    if (!address || address.length < 3) return null
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  const inputStyle = {
+    width: '100%',
+    background: '#0a0a0f',
+    border: '1px solid #1e293b',
+    borderRadius: '10px',
+    padding: '12px',
+    color: 'white',
+    fontSize: '14px',
+    marginBottom: '12px',
+    outline: 'none'
+  };
+
+  const handleAddContact = async () => {
+    if (!form.name.trim() || !form.phone.trim()) {
+      setMsg('❌ Name aur phone zaroori hai!');
+      return;
+    }
+    if (!form.address.trim()) {
+      setMsg('❌ Address daalo — tabhi route pe dikhega!');
+      return;
+    }
+
+    setLoading(true);
+    setMsg('📍 Location dhundh raha hai...');
+
+    let lat = null;
+    let lng = null;
+
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`
-      )
-      const data = await res.json()
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(form.address)}&format=json&limit=1`
+      );
+      const data = await res.json();
       if (data[0]) {
-        return {
-          lat: parseFloat(data[0].lat),
-          lng: parseFloat(data[0].lon)
-        }
+        lat = parseFloat(data[0].lat);
+        lng = parseFloat(data[0].lon);
       }
-    } catch(e) {
-      console.error('Geocode failed:', e)
-    }
-    return null
-  }
-
-  const loadDemoContacts = () => {
-    const DEMO_CONTACTS = [
-      { id: 1, name: 'Mom', phone: '9876543210', relation: 'Family', address: 'Pithampur, Madhya Pradesh', lat: 22.6177, lng: 75.6953 },
-      { id: 2, name: 'Best Friend', phone: '9123456789', relation: 'Friend', address: 'Mhow, Indore', lat: 22.5518, lng: 75.7587 },
-      { id: 3, name: 'Uncle', phone: '9988776655', relation: 'Family', address: 'Sanwer, Indore', lat: 22.9728, lng: 75.8309 },
-      { id: 4, name: 'Colleague', phone: '9876512345', relation: 'Work', address: 'Vijay Nagar, Indore', lat: 22.7533, lng: 75.8937 }
-    ]
-    localStorage.setItem('trusted_contacts', JSON.stringify(DEMO_CONTACTS))
-    setContacts(DEMO_CONTACTS)
-    alert('Demo contacts loaded ✅\nNow go to Map and search any route!')
-  }
-
-  const addContact = async (e) => {
-    e.preventDefault()
-    if (!newContact.name || !newContact.phone) {
-      alert('Name and phone required!')
-      return
+    } catch (e) {
+      console.error(e);
     }
 
-    setLoading(true)
-    let lat = null, lng = null
+    setLoading(false);
 
-    if (newContact.address) {
-      try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(newContact.address)}&format=json&limit=1`
-        )
-        const data = await res.json()
-        if (data[0]) {
-          lat = parseFloat(data[0].lat)
-          lng = parseFloat(data[0].lon)
-        }
-      } catch(e) {
-        console.error('Geocode error:', e)
-      }
-    }
-
-    const contact = {
+    const newContact = {
       id: Date.now(),
-      name: newContact.name,
-      phone: newContact.phone,
-      relation: newContact.relation || 'Contact',
-      address: newContact.address || '',
+      name: form.name.trim(),
+      phone: form.phone.trim(),
+      relation: form.relation.trim() || 'Contact',
+      address: form.address.trim(),
       lat,
       lng
-    }
+    };
 
-    const updated = [...contacts, contact]
-    setContacts(updated)
-    localStorage.setItem('trusted_contacts', JSON.stringify(updated))
+    const updated = [...contacts, newContact];
+    setContacts(updated);
+    localStorage.setItem('trusted_contacts', JSON.stringify(updated));
 
-    alert(`${contact.name} added! ${
-      lat ? 'Location found ✅' 
-          : '❌ Location not found - be more specific'
-    }`)
+    setForm({ name: '', phone: '', relation: '', address: '' });
 
-    setNewContact({ name:'', phone:'', relation:'', address:'', lat:null, lng:null })
-    setIsAdding(false)
-    setLoading(false)
-  }
+    setMsg(
+      lat
+        ? `✅ ${newContact.name} added! Route pe dikhega.`
+        : `⚠️ ${newContact.name} add hua but location nahi mili. Address clear karo.`
+    );
+
+    setTimeout(() => setMsg(''), 4000);
+  };
+
+  const handleRemove = (id) => {
+    const updated = contacts.filter(c => c.id !== id);
+    setContacts(updated);
+    localStorage.setItem('trusted_contacts', JSON.stringify(updated));
+  };
 
   return (
-    <div className="space-y-4">
-      <button 
-        onClick={loadDemoContacts}
-        className="w-full p-3 text-xs bg-brand-surface border border-brand-purple/30 text-brand-purple rounded-lg hover:bg-brand-purple/5 transition-all flex items-center justify-center gap-2 font-medium mb-2"
-      >
-        🎯 Load Demo Contacts (for testing)
-      </button>
-
-      {contacts.map((c, i) => (
-        <div key={i} className="flex items-center justify-between p-3 bg-brand-surface/50 rounded-lg border border-brand-border/30">
-          <div>
-            <div className="font-semibold text-brand-text-primary">👤 {c.name}</div>
-            <div className="text-xs text-brand-text-secondary">📞 {c.phone} • 🔗 {c.relation}</div>
-            <div className="text-[10px] text-brand-text-muted mt-1 flex items-center gap-1">
-              📍 {c.address || 'No address saved'}
-              {c.lat ? <span className="text-brand-safe font-bold">✅</span> : <span className="text-brand-danger font-bold">❌ No Location</span>}
-            </div>
-          </div>
-          <button 
-            onClick={() => {
-              const updated = contacts.filter((_, idx) => idx !== i)
-              setContacts(updated)
-              localStorage.setItem('trusted_contacts', JSON.stringify(updated))
-            }}
-            className="p-2 text-brand-danger hover:bg-brand-danger/10 rounded-lg transition-colors"
-          >
-            <X size={16} />
-          </button>
+    <div>
+      <div style={{
+        background: '#1a2332',
+        padding: '16px',
+        borderRadius: '12px',
+        border: '1px solid #2d3748',
+        marginBottom: '20px'
+      }}>
+        <div style={{
+          color: '#a78bfa',
+          fontWeight: '600',
+          fontSize: '15px',
+          marginBottom: '14px'
+        }}>
+          ➕ Naya Contact Add Karo
         </div>
-      ))}
 
-      {isAdding ? (
-        <form onSubmit={addContact} className="p-4 bg-brand-surface rounded-lg border border-brand-purple/30 space-y-3">
-          <input
-            placeholder="Full Name *"
-            className="w-full bg-brand-bg border border-brand-border rounded-lg p-2 text-sm focus:border-brand-purple outline-none"
-            value={newContact.name}
-            onChange={e => setNewContact({...newContact, name: e.target.value})}
-            required
-          />
-          <input
-            placeholder="Phone Number *"
-            className="w-full bg-brand-bg border border-brand-border rounded-lg p-2 text-sm focus:border-brand-purple outline-none"
-            value={newContact.phone}
-            onChange={e => setNewContact({...newContact, phone: e.target.value})}
-            required
-          />
-          <input
-            placeholder="Relation (Mom/Friend/etc)"
-            className="w-full bg-brand-bg border border-brand-border rounded-lg p-2 text-sm focus:border-brand-purple outline-none"
-            value={newContact.relation}
-            onChange={e => setNewContact({...newContact, relation: e.target.value})}
-          />
-          <input
-            placeholder="Their area/address e.g. Vijay Nagar, Indore *"
-            className="w-full bg-brand-bg border border-brand-border rounded-lg p-2 text-sm focus:border-brand-purple outline-none"
-            value={newContact.address}
-            onChange={e => setNewContact({...newContact, address: e.target.value})}
-            required
-          />
-          <div className="text-[10px] text-brand-text-muted italic">
-            ⚠ Address is required to show them on your route map.
+        {/* Name */}
+        <input
+          placeholder="👤 Naam (e.g. Mom, Didi)"
+          value={form.name}
+          onChange={e => setForm({ ...form, name: e.target.value })}
+          style={inputStyle}
+        />
+
+        {/* Phone */}
+        <input
+          placeholder="📞 Phone Number"
+          value={form.phone}
+          type="tel"
+          onChange={e => setForm({ ...form, phone: e.target.value })}
+          style={inputStyle}
+        />
+
+        {/* Relation */}
+        <input
+          placeholder="🔗 Rishta (Mom / Friend / Bhai)"
+          value={form.relation}
+          onChange={e => setForm({ ...form, relation: e.target.value })}
+          style={inputStyle}
+        />
+
+        {/* Address - MOST IMPORTANT */}
+        <input
+          placeholder="📍 Unka area / location (e.g. Pithampur, MP)"
+          value={form.address}
+          onChange={e => setForm({ ...form, address: e.target.value })}
+          style={{
+            ...inputStyle,
+            border: '1px solid #7c3aed'
+          }}
+        />
+        <div style={{
+          fontSize: '11px',
+          color: '#64748b',
+          marginBottom: '12px',
+          marginTop: '-4px'
+        }}>
+          ⚠️ Yahi important hai — isi se route pe contact dikhega
+        </div>
+
+        {/* Message */}
+        {msg && (
+          <div style={{
+            padding: '8px 12px',
+            background: msg.includes('✅')
+              ? 'rgba(16,185,129,0.1)'
+              : msg.includes('❌')
+                ? 'rgba(239,68,68,0.1)'
+                : 'rgba(124,58,237,0.1)',
+            border: `1px solid ${msg.includes('✅') ? '#10b981'
+              : msg.includes('❌') ? '#ef4444'
+                : '#7c3aed'
+              }`,
+            borderRadius: '8px',
+            color: '#e2e8f0',
+            fontSize: '12px',
+            marginBottom: '10px'
+          }}>
+            {msg}
           </div>
-          <div className="flex gap-2 pt-2">
-            <button 
-              type="submit" 
-              disabled={loading}
-              className="flex-1 bg-gradient-brand text-white p-2 rounded-lg text-sm font-medium disabled:opacity-50"
-            >
-              {loading ? 'Finding Location...' : '+ Add Contact'}
-            </button>
-            <button 
-              type="button"
-              onClick={() => setIsAdding(false)}
-              className="px-4 py-2 border border-brand-border rounded-lg text-sm text-brand-text-secondary"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      ) : (
-        <button 
-          onClick={() => setIsAdding(true)}
-          className="w-full flex items-center justify-center gap-2 p-3 text-sm text-brand-purple hover:bg-brand-purple/5 border border-dashed border-brand-purple/30 rounded-lg transition-colors font-medium"
+        )}
+
+        {/* Submit */}
+        <button
+          onClick={handleAddContact}
+          disabled={loading}
+          style={{
+            width: '100%',
+            background: loading
+              ? '#374151'
+              : 'linear-gradient(135deg,#7c3aed,#ec4899)',
+            border: 'none',
+            borderRadius: '10px',
+            padding: '12px',
+            color: 'white',
+            cursor: loading ? 'wait' : 'pointer',
+            fontSize: '14px',
+            fontWeight: '500'
+          }}
         >
-          <Plus size={16} /> Add Trusted Contact
+          {loading
+            ? '📍 Location dhundh raha hai...'
+            : '+ Contact Add Karo'
+          }
         </button>
+      </div>
+
+      <div style={{
+        color: '#a78bfa',
+        fontWeight: '600',
+        fontSize: '15px',
+        marginBottom: '12px'
+      }}>
+        👥 Saved Contacts ({contacts.length})
+      </div>
+
+      {contacts.length === 0 ? (
+        <div style={{
+          textAlign: 'center',
+          color: '#64748b',
+          padding: '20px',
+          background: '#1a2332',
+          borderRadius: '12px',
+          fontSize: '13px'
+        }}>
+          Koi contact nahi hai abhi.<br />
+          Upar se add karo! 👆
+        </div>
+      ) : (
+        contacts.map(contact => (
+          <div key={contact.id} style={{
+            background: '#1a2332',
+            padding: '14px',
+            borderRadius: '12px',
+            border: `1px solid ${contact.lat ? '#10b981' : '#ef4444'
+              }`,
+            marginBottom: '10px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start'
+          }}>
+            <div>
+              <div style={{
+                color: '#e2e8f0',
+                fontWeight: '600',
+                fontSize: '14px'
+              }}>
+                👤 {contact.name}
+              </div>
+              <div style={{
+                color: '#64748b',
+                fontSize: '12px',
+                marginTop: '3px'
+              }}>
+                📞 {contact.phone}
+              </div>
+              <div style={{
+                color: '#64748b',
+                fontSize: '12px'
+              }}>
+                🔗 {contact.relation}
+              </div>
+              <div style={{
+                fontSize: '11px',
+                marginTop: '4px',
+                color: contact.lat
+                  ? '#10b981'
+                  : '#ef4444'
+              }}>
+                {contact.lat
+                  ? `✅ ${contact.address}`
+                  : `❌ Location nahi mili`
+                }
+              </div>
+            </div>
+
+            <button
+              onClick={() => handleRemove(contact.id)}
+              style={{
+                background: '#dc2626',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '6px 10px',
+                color: 'white',
+                cursor: 'pointer',
+                fontSize: '12px',
+                flexShrink: 0
+              }}
+            >
+              🗑 Remove
+            </button>
+          </div>
+        ))
       )}
     </div>
-  )
-}
+  );
+};
 
 export default function ProfilePage() {
   const [user, setUser] = useState(null);

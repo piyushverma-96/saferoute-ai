@@ -33,26 +33,26 @@ const MapUpdater = ({
     const routeIndex = routes.findIndex(r => r.id === activeRoute.id);
 
     // 4. Place stops on route
-    safeStops.forEach((stop, i) => {
-      const point = getPointOnRoute(activeRoute.coordinates, stop.position);
-      if (!point) return;
+    const stops = selectedRoute?.nearbyContacts || [];
+    stops.forEach((stop, i) => {
+      const point = [stop.lat, stop.lng];
+      if (!point[0] || !point[1]) return;
 
-      // Simulated logic: safest route = more online contacts
-      let isOnline = stop.isOnline;
-      if (routeIndex === 0) isOnline = true;
-      if (routeIndex === 1) isOnline = (i < 2);
-      if (routeIndex === 2) isOnline = (i < 1);
+      const avatar = stop.relation?.toLowerCase().includes('mom') ? '👩' : 
+                   stop.relation?.toLowerCase().includes('sister') ? '👱‍♀️' :
+                   stop.relation?.toLowerCase().includes('friend') ? '👧' : '👤';
+
+      // Simulated logic: safest route = more "Safe Stop" label
+      const isOnline = routeIndex === 0 || (routeIndex === 1 && i < 2) || (routeIndex === 2 && i < 1);
 
       // Stop marker HTML
       const html = `
         <div style="display: flex; flex-direction: column; align-items: center;">
-          <!-- Connector line to route -->
-          <div style="width: 2px; height: 12px; background: ${isOnline ? '#10b981' : '#64748b'};"></div>
+          <div style="width: 2px; height: 12px; background: #10b981;"></div>
           
-          <!-- Contact bubble -->
           <div style="
-            background: ${isOnline ? '#064e3b' : '#1e293b'};
-            border: 2px solid ${isOnline ? '#10b981' : '#64748b'};
+            background: #064e3b;
+            border: 2px solid #10b981;
             border-radius: 12px;
             padding: 6px 10px;
             display: flex;
@@ -61,30 +61,11 @@ const MapUpdater = ({
             box-shadow: 0 4px 12px rgba(0,0,0,0.5);
             white-space: nowrap;
           ">
-            <span style="font-size:16px">${stop.avatar}</span>
+            <span style="font-size:16px">${avatar}</span>
             <div>
               <div style="color: white; font-size: 11px; font-weight: 600;">${stop.name}</div>
-              <div style="color: ${isOnline ? '#10b981' : '#94a3b8'}; font-size: 9px;">
-                ${isOnline ? '🟢 Safe Stop' : '⚫ Offline'}
-              </div>
+              <div style="color: #10b981; font-size: 9px;">🟢 Safe Stop</div>
             </div>
-          </div>
-          
-          <!-- Stop number badge -->
-          <div style="
-            background: #7c3aed;
-            color: white;
-            font-size: 9px;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-top: 2px;
-            font-weight: 600;
-          ">
-            ${i + 1}
           </div>
         </div>
       `;
@@ -98,20 +79,14 @@ const MapUpdater = ({
 
       const marker = L.marker(point, { icon }).addTo(map);
 
-      // Popup when clicked
+      // Popup
       marker.bindPopup(`
         <div style="background: #1a2332; border-radius: 12px; padding: 16px; min-width: 180px; color: #f1f5f9;">
-          <div style="text-align: center; font-size: 32px; margin-bottom: 8px;">${stop.avatar}</div>
+          <div style="text-align: center; font-size: 32px; margin-bottom: 8px;">${avatar}</div>
           <div style="font-weight: 600; font-size: 15px; text-align: center; margin-bottom: 4px;">${stop.name}</div>
-          <div style="color: ${isOnline ? '#10b981' : '#64748b'}; font-size: 12px; text-align: center; margin-bottom: 4px;">
-            ${isOnline ? '🟢 Online — Safe Stop' : '⚫ Offline'}
-          </div>
+          <div style="color: #10b981; font-size: 12px; text-align: center; margin-bottom: 4px;">🟢 Safe Stop — ${stop.relation}</div>
           <div style="color: #64748b; font-size: 11px; text-align: center; margin-bottom: 12px;">📍 ${stop.address}</div>
-          <div style="color: #94a3b8; font-size: 11px; background: rgba(124,58,237,0.1); border: 1px solid #7c3aed; border-radius: 8px; padding: 8px; text-align: center; margin-bottom: 10px;">
-            🛡 You can safely stop here if needed
-          </div>
           
-          <!-- Action buttons -->
           <div style="display: flex; gap: 8px;">
             <a href="tel:${stop.phone}" style="flex: 1; background: linear-gradient(135deg, #7c3aed, #ec4899); color: white; text-align: center; padding: 8px; border-radius: 8px; font-size: 12px; text-decoration: none; display: block;">📞 Call</a>
             <a href="sms:${stop.phone}" style="flex: 1; background: #1e293b; border: 1px solid #374151; color: #94a3b8; text-align: center; padding: 8px; border-radius: 8px; font-size: 12px; text-decoration: none; display: block;">💬 SMS</a>

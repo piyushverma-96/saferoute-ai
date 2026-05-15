@@ -155,6 +155,53 @@ function App() {
   const { isSOSActive, toggleSOS, closeSOS, userId } = useSOS();
 
   useEffect(() => {
+    const alreadyLoaded = localStorage.getItem('demo_contacts_loaded');
+    if (!alreadyLoaded) {
+      const DEMO_CONTACTS = [
+        {
+          id: 1,
+          name: 'Mom',
+          phone: '9876543210',
+          relation: 'Family',
+          address: 'Pithampur, Madhya Pradesh',
+          lat: 22.6177,
+          lng: 75.6953
+        },
+        {
+          id: 2,
+          name: 'Best Friend',
+          phone: '9123456789',
+          relation: 'Friend',
+          address: 'Sanwer Road, Indore',
+          lat: 22.6800,
+          lng: 75.8100
+        },
+        {
+          id: 3,
+          name: 'Sister',
+          phone: '9988776655',
+          relation: 'Family',
+          address: 'Lasudia, Indore',
+          lat: 22.7200,
+          lng: 75.8400
+        },
+        {
+          id: 4,
+          name: 'Uncle',
+          phone: '9876512345',
+          relation: 'Family',
+          address: 'Mhow, Indore',
+          lat: 22.5518,
+          lng: 75.7587
+        }
+      ];
+      localStorage.setItem('trusted_contacts', JSON.stringify(DEMO_CONTACTS));
+      localStorage.setItem('demo_contacts_loaded', 'true');
+      console.log('Demo contacts loaded ✅');
+    }
+  }, []);
+
+  useEffect(() => {
     const unlockAudio = () => {
       const utterance = new SpeechSynthesisUtterance('');
       window.speechSynthesis.speak(utterance);
