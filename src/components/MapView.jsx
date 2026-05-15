@@ -17,40 +17,46 @@ const MapUpdater = ({
   routes
 }) => {
   const map = useMap();
-  const stopMarkersRef = useRef([]);
+  const contactMarkersRef = useRef([]);
 
-  useEffect(() => {
-    if (!map) return;
+  const updateContactsForRoute = (map, routeCoords) => {
+    // 1. Purane markers hatao
+    contactMarkersRef.current.forEach(m => map.removeLayer(m));
+    contactMarkersRef.current = [];
 
-    // 1. Clear old stops
-    stopMarkersRef.current.forEach(m => map.removeLayer(m));
-    stopMarkersRef.current = [];
+    if (!routeCoords || routeCoords.length === 0) return;
 
-    // 2. Determine active route coords
-    const activeRoute = selectedRoute || (routes && routes[0]);
-    if (!activeRoute?.coordinates) return;
-
-    // 3. Load contacts
-    const savedContacts = JSON.parse(
+    // 2. Load contacts
+    const contacts = JSON.parse(
       localStorage.getItem('trusted_contacts') || '[]'
     );
 
-    // 4. Filter contacts near THIS route only (3km threshold)
-    const nearbyContacts = savedContacts.filter(contact => 
-      isContactNearRoute(contact, activeRoute.coordinates, 3.0)
-    );
+    // 3. Sirf us route ke 3km range wale contacts
+    const nearby = contacts.filter(contact => {
+      if (!contact.lat || !contact.lng) return false;
+      return routeCoords.some(([lat, lng]) => {
+        const R = 6371;
+        const dLat = (contact.lat - lat) * Math.PI / 180;
+        const dLng = (contact.lng - lng) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) ** 2 +
+          Math.cos(lat * Math.PI / 180) *
+          Math.cos(contact.lat * Math.PI / 180) *
+          Math.sin(dLng / 2) ** 2;
+        const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return dist <= 3.0; // 3km threshold
+      });
+    });
 
-    console.log('Selected route contacts:', nearbyContacts.map(c => c.name));
+    console.log('Selected route contacts:', nearby.map(c => c.name));
 
-    // Draw markers for nearby contacts
-    nearbyContacts.forEach(contact => {
+    // 4. Markers lagao
+    nearby.forEach(contact => {
       const marker = L.circleMarker([contact.lat, contact.lng], {
         radius: 12,
         fillColor: '#7c3aed',
-        color: '#fff',
+        color: '#ffffff',
         weight: 2,
         fillOpacity: 1,
-        interactive: true,
         zIndexOffset: 1000
       })
       .bindTooltip(`👤 ${contact.name}`, {
@@ -60,37 +66,36 @@ const MapUpdater = ({
         className: 'contact-label'
       })
       .bindPopup(`
-        <div style="background:#1a2332;color:white;
-          padding:12px;border-radius:10px;
-          min-width:170px;border:1px solid #7c3aed;
+        <div style="background:#1a2332;color:white;padding:12px;
+          border-radius:10px;min-width:170px;border:1px solid #7c3aed;
           font-family:sans-serif;">
-          <div style="color:#a78bfa;font-weight:700;
-            font-size:14px;margin-bottom:6px;">
+          <div style="color:#a78bfa;font-weight:700;font-size:14px">
             👤 ${contact.name}
           </div>
-          <div style="color:#94a3b8;font-size:12px;
-            margin-bottom:4px;">
+          <div style="color:#94a3b8;font-size:12px;margin-top:4px">
             📍 ${contact.address}
           </div>
-          <div style="color:#94a3b8;font-size:12px;
-            margin-bottom:10px;">
+          <div style="color:#94a3b8;font-size:12px;margin-top:4px">
             🔗 ${contact.relation}
           </div>
-          <a href="tel:${contact.phone}" style="
-            display:block;
-            background:linear-gradient(135deg,#7c3aed,#ec4899);
-            color:white;text-align:center;
-            padding:8px;border-radius:6px;
-            text-decoration:none;font-size:13px;
-            font-weight:600;">
+          <a href="tel:${contact.phone}" style="display:block;
+            margin-top:10px;background:linear-gradient(135deg,#7c3aed,#ec4899);
+            color:white;text-align:center;padding:8px;border-radius:6px;
+            text-decoration:none;font-size:13px;font-weight:600">
             📞 Call ${contact.name}
           </a>
         </div>
       `)
       .addTo(map);
 
-      stopMarkersRef.current.push(marker);
+      contactMarkersRef.current.push(marker);
     });
+  };
+
+  useEffect(() => {
+    if (!map) return;
+    const activeRoute = selectedRoute || (routes && routes[0]);
+    updateContactsForRoute(map, activeRoute?.coordinates || []);
   }, [map, selectedRoute, routes]);
 
   useEffect(() => {

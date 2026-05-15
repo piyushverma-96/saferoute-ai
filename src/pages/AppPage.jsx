@@ -11,6 +11,7 @@ export default function AppPage() {
   const [endQuery, setEndQuery] = useState('');
   const [travelHour, setTravelHour] = useState(new Date().getHours());
   const [selectedRoute, setSelectedRoute] = useState(null);
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
   const [userCoords, setUserCoords] = useState(null);
   const [isDetectingLocation, setIsDetectingLocation] = useState(true);
   const [locationError, setLocationError] = useState('');
@@ -156,7 +157,9 @@ export default function AppPage() {
 
   const isNightTime = travelHour >= 19 || travelHour <= 5;
 
-  const handleRouteSelect = (route) => {
+  const handleRouteSelect = (index) => {
+    setSelectedRouteIndex(index);
+    const route = routes[index];
     setSelectedRoute(route);
     if (route) {
       speak(
@@ -165,7 +168,7 @@ export default function AppPage() {
         : `${route.name} selected. Distance ${route.distance} kilometers. Safety score ${route.score} out of 100.`
       );
       if (isMobile) {
-        setSidebarOpen(false); // Optionally hide sidebar to see the map after selecting
+        setSidebarOpen(false);
       }
     }
   };
@@ -230,7 +233,7 @@ export default function AppPage() {
             routePref={routePreference}
             setRoutePref={setRoutePreference}
             routes={routes}
-            selectedRoute={selectedRoute}
+            selectedRouteIndex={selectedRouteIndex}
             onRouteSelect={handleRouteSelect}
             onSearch={handleSearch}
             isLoading={isLoading}
@@ -313,7 +316,7 @@ export default function AppPage() {
                 routePref={routePreference}
                 setRoutePref={setRoutePreference}
                 routes={routes}
-                selectedRoute={selectedRoute}
+                selectedRouteIndex={selectedRouteIndex}
                 onRouteSelect={handleRouteSelect}
                 onSearch={handleSearch}
                 isLoading={isLoading}

@@ -19,7 +19,7 @@ export default function Sidebar({
   routes, 
   isLoading, 
   error,
-  selectedRoute,
+  selectedRouteIndex,
   onRouteSelect,
   userCoords,
   isDetectingLocation,
@@ -431,10 +431,11 @@ export default function Sidebar({
               <RouteCard
                 key={route.id}
                 route={route}
+                index={i}
                 selected={
-                  selectedRoute?.id === route.id
+                  selectedRouteIndex === i
                 }
-                onSelect={(r) => onRouteSelect(r)}
+                onSelect={() => onRouteSelect(i)}
                 travelTime={travelHour >= 19 || travelHour < 6 ? 'night' : travelHour >= 17 ? 'evening' : 'day'}
               />
             ))}

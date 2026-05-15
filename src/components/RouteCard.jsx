@@ -8,7 +8,7 @@ const RouteCard = ({ route, selected, onSelect, travelTime }) => {
   
   return (
     <div
-      onClick={() => onSelect(route)}
+      onClick={() => onSelect && onSelect()}
       style={{
         background: selected 
           ? 'rgba(124,58,237,0.15)' 
