@@ -19,6 +19,7 @@ export default function Sidebar({
   routes, 
   isLoading, 
   error,
+  selectedRoute,
   selectedRouteIndex,
   onRouteSelect,
   userCoords,
@@ -427,15 +428,15 @@ export default function Sidebar({
             scrollbarColor: '#7C3AED transparent',
             paddingRight: '4px'
           }}>
-            {routes.map(route => (
+            {routes.map((route, index) => (
               <RouteCard
-                key={route.id}
+                key={index}
                 route={route}
-                index={i}
+                index={index}
                 selected={
-                  selectedRouteIndex === i
+                  selectedRouteIndex === index
                 }
-                onSelect={() => onRouteSelect(i)}
+                onClick={() => onRouteSelect(index)}
                 travelTime={travelHour >= 19 || travelHour < 6 ? 'night' : travelHour >= 17 ? 'evening' : 'day'}
               />
             ))}

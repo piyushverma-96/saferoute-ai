@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 
 import { getContactsNearRoute } from '../utils/contactUtils'
 
-const RouteCard = ({ route, selected, onSelect, travelTime }) => {
+const RouteCard = ({ route, selected, onClick, travelTime }) => {
   const [showAI, setShowAI] = useState(false)
   const nearbyContacts = getContactsNearRoute(route.coordinates || [], 3.0)
   
   return (
     <div
-      onClick={() => onSelect && onSelect()}
+      onClick={() => onClick && onClick()}
       style={{
         background: selected 
           ? 'rgba(124,58,237,0.15)' 

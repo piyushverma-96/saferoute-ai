@@ -233,6 +233,7 @@ export default function AppPage() {
             routePref={routePreference}
             setRoutePref={setRoutePreference}
             routes={routes}
+            selectedRoute={selectedRoute}
             selectedRouteIndex={selectedRouteIndex}
             onRouteSelect={handleRouteSelect}
             onSearch={handleSearch}
@@ -316,6 +317,7 @@ export default function AppPage() {
                 routePref={routePreference}
                 setRoutePref={setRoutePreference}
                 routes={routes}
+                selectedRoute={selectedRoute}
                 selectedRouteIndex={selectedRouteIndex}
                 onRouteSelect={handleRouteSelect}
                 onSearch={handleSearch}
