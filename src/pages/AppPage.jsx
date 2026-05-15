@@ -131,6 +131,7 @@ export default function AppPage() {
     if (!start || !end) return;
     fetchRoutes(start, end, hour, pref);
     setSelectedRoute(null);
+    setSelectedRouteIndex(0);
     if (isMobile) {
       setSidebarOpen(true);
     }
@@ -139,6 +140,7 @@ export default function AppPage() {
   useEffect(() => {
     if (routes && routes.length > 0) {
       setSelectedRoute(routes[0]);
+      setSelectedRouteIndex(0);
       
       // Voice announcement based on preference
       if (routePreference === 'safest') {
@@ -202,6 +204,7 @@ export default function AppPage() {
         <MapView
           routes={routes}
           selectedRoute={selectedRoute}
+          selectedRouteIndex={selectedRouteIndex}
           onRouteSelect={handleRouteSelect}
           startCoords={startPoint ? [startPoint.lat, startPoint.lon] : null}
           endCoords={endPoint ? [endPoint.lat, endPoint.lon] : null}

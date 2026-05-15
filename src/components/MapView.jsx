@@ -12,7 +12,7 @@ const getPointOnRoute = (coords, percentage) => {
 }
 
 const MapUpdater = ({ 
-  selectedRoute, 
+  selectedRouteIndex, 
   userCoords,
   routes
 }) => {
@@ -20,18 +20,18 @@ const MapUpdater = ({
   const contactMarkersRef = useRef([]);
 
   const updateContactsForRoute = (map, routeCoords) => {
-    // 1. Purane markers hatao
+    // 1. Purane contact markers hatao
     contactMarkersRef.current.forEach(m => map.removeLayer(m));
     contactMarkersRef.current = [];
 
     if (!routeCoords || routeCoords.length === 0) return;
 
-    // 2. Load contacts
+    // 2. Load contacts from storage
     const contacts = JSON.parse(
       localStorage.getItem('trusted_contacts') || '[]'
     );
 
-    // 3. Sirf us route ke 3km range wale contacts
+    // 3. Sirf selected route ke 3km range wale filter karo
     const nearby = contacts.filter(contact => {
       if (!contact.lat || !contact.lng) return false;
       return routeCoords.some(([lat, lng]) => {
@@ -47,9 +47,9 @@ const MapUpdater = ({
       });
     });
 
-    console.log('Selected route contacts:', nearby.map(c => c.name));
+    console.log(`Contacts for route ${selectedRouteIndex}:`, nearby.map(c => c.name));
 
-    // 4. Markers lagao
+    // 4. Filtered contacts ke markers lagao
     nearby.forEach(contact => {
       const marker = L.circleMarker([contact.lat, contact.lng], {
         radius: 12,
@@ -93,45 +93,52 @@ const MapUpdater = ({
   };
 
   useEffect(() => {
-    if (!map) return;
-    const activeRoute = selectedRoute || (routes && routes[0]);
-    updateContactsForRoute(map, activeRoute?.coordinates || []);
-  }, [map, selectedRoute, routes]);
+    if (!map || !routes || routes.length === 0) return;
+    
+    // Determine which route to use
+    const activeRoute = routes[selectedRouteIndex] || routes[0];
+    if (activeRoute?.coordinates) {
+      updateContactsForRoute(map, activeRoute.coordinates);
+    }
+  }, [map, selectedRouteIndex, routes]);
 
   useEffect(() => {
-    if (!map || !routes?.length) return
-    const allCoords = routes.flatMap(r => r.coordinates || [])
+    if (!map || !routes?.length) return;
+    const allCoords = routes.flatMap(r => r.coordinates || []);
     if (allCoords.length > 0) {
       try {
-        const bounds = L.latLngBounds(allCoords)
-        map.flyToBounds(bounds, { padding: [80, 80], maxZoom: 14, duration: 1.2 })
-      } catch(e) { console.log('bounds error:', e) }
+        const bounds = L.latLngBounds(allCoords);
+        map.flyToBounds(bounds, { padding: [80, 80], maxZoom: 14, duration: 1.2 });
+      } catch(e) { console.log('bounds error:', e); }
     }
-  }, [routes, map])
+  }, [routes, map]);
 
   useEffect(() => {
-    if (!map || !selectedRoute) return
-    if (selectedRoute?.coordinates?.length > 0) {
+    if (!map || !routes || !routes[selectedRouteIndex]) return;
+    const coords = routes[selectedRouteIndex].coordinates;
+    if (coords && coords.length > 0) {
       try {
-        const bounds = L.latLngBounds(selectedRoute.coordinates)
-        map.flyToBounds(bounds, { padding: [60, 60], maxZoom: 15, duration: 0.8 })
-      } catch(e) { console.log('bounds error:', e) }
+        const bounds = L.latLngBounds(coords);
+        map.flyToBounds(bounds, { padding: [60, 60], maxZoom: 15, duration: 0.8 });
+      } catch(e) { console.log('bounds error:', e); }
     }
-  }, [selectedRoute, map])
+  }, [selectedRouteIndex, map, routes]);
 
   useEffect(() => {
-    if (!map) return
-    if (!selectedRoute && (!routes || routes.length === 0) && userCoords) {
-      map.flyTo(userCoords, 13, { duration: 1.5 })
+    if (!map) return;
+    if (!routes || routes.length === 0) {
+      if (userCoords) {
+        map.flyTo(userCoords, 13, { duration: 1.5 });
+      }
     }
-  }, [userCoords, map, selectedRoute, routes])
+  }, [userCoords, map, routes]);
   
-  return null
+  return null;
 }
 
 const MapView = ({
   routes = [],
-  selectedRoute = null,
+  selectedRouteIndex = 0,
   onRouteSelect,
   startCoords,
   endCoords,
@@ -151,7 +158,7 @@ const MapView = ({
       />
       
       <MapUpdater
-        selectedRoute={selectedRoute}
+        selectedRouteIndex={selectedRouteIndex}
         userCoords={userCoords}
         routes={routes}
       />
