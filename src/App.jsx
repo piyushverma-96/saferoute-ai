@@ -161,16 +161,6 @@ function App() {
     };
     document.addEventListener('touchstart', unlockAudio, { once: true });
 
-    // Initialize mock contacts for demo
-    if (!localStorage.getItem('trusted_contacts')) {
-      import('./data/mockData').then(({ MOCK_CONTACTS }) => {
-        localStorage.setItem(
-          'trusted_contacts',
-          JSON.stringify(MOCK_CONTACTS)
-        );
-      });
-    }
-
     return () => {
       document.removeEventListener('touchstart', unlockAudio);
     };

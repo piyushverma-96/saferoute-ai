@@ -1,29 +1,28 @@
 import React, { useState } from 'react';
-import { MOCK_CONTACTS } from '../data/mockData';
 
 const getDistanceKm = (lat1, lng1, lat2, lng2) => {
-  const R = 6371
-  const dLat = (lat2 - lat1) * Math.PI / 180
-  const dLng = (lng2 - lng1) * Math.PI / 180
-  const a = Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) *
-    Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-}
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
 
 const getNearbyContacts = (routeCoords) => {
   const contacts = JSON.parse(
-    localStorage.getItem('trusted_contacts')
-  ) || MOCK_CONTACTS
+    localStorage.getItem('trusted_contacts') || '[]'
+  );
 
   return contacts.filter(contact => {
-    if (!contact.lat || !contact.lng) return false
+    if (!contact.lat || !contact.lng) return false;
     return routeCoords.some(([lat, lng]) =>
-      getDistanceKm(lat, lng, contact.lat, contact.lng) <= 0.8
-    )
-  })
-}
+      getDistanceKm(lat, lng, contact.lat, contact.lng) <= 1.0
+    );
+  });
+};
 
 const RouteCard = ({ route, selected, onSelect, travelTime }) => {
   const [showAI, setShowAI] = useState(false)

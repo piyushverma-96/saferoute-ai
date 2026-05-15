@@ -3,69 +3,82 @@ import { MapContainer, TileLayer, Polyline, Marker, useMap, ZoomControl } from '
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-const MOCK_CONTACTS = [
-  { name: 'Mom', phone: '9876543210', relation: 'Family', address: 'Vijay Nagar, Indore', lat: 22.7533, lng: 75.8937 },
-  { name: 'Best Friend', phone: '9123456789', relation: 'Friend', address: 'Palasia, Indore', lat: 22.7196, lng: 75.8577 },
-  { name: 'Colleague', phone: '9988776655', relation: 'Colleague', address: 'Rajwada, Indore', lat: 22.7196, lng: 75.8411 }
-]
+// Distance calculator (Haversine)
+const getDistanceKm = (lat1, lng1, lat2, lng2) => {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
+// Check if contact is near route path
+const isContactNearRoute = (contact, routeCoords) => {
+  if (!contact.lat || !contact.lng || !routeCoords?.length) return false;
+  return routeCoords.some(([lat, lng]) => {
+    return getDistanceKm(lat, lng, contact.lat, contact.lng) <= 1.0; // 1km threshold
+  });
+};
 
 const MapUpdater = ({ 
   selectedRoute, 
   userCoords,
   routes
 }) => {
-  const map = useMap()
+  const map = useMap();
+  const contactMarkersRef = useRef([]);
 
-  // ── CONTACTS – paste right after polylines ──
-  const CONTACTS = [
-    {
-      name: 'Mom',
-      phone: '9876543210',
-      relation: 'Family',
-      address: 'Vijay Nagar, Indore',
-      lat: 22.7533,
-      lng: 75.8937
-    },
-    {
-      name: 'Best Friend', 
-      phone: '9123456789',
-      relation: 'Friend',
-      address: 'Palasia, Indore',
-      lat: 22.7196,
-      lng: 75.8577
-    },
-    {
-      name: 'Colleague',
-      phone: '9988776655',
-      relation: 'Colleague',
-      address: 'Rajwada, Indore',
-      lat: 22.7300,
-      lng: 75.8700
-    }
-  ]
+  useEffect(() => {
+    if (!map) return;
 
-  CONTACTS.forEach(c => {
-    L.circleMarker([c.lat, c.lng], {
-      radius: 12,
-      fillColor: '#7c3aed',
-      color: '#ffffff',
-      weight: 2,
-      fillOpacity: 1
-    })
-    .bindPopup(`
-      <b style="color:#7c3aed">👤 ${c.name}</b><br/>
-      📍 ${c.address}<br/>
-      🔗 ${c.relation}<br/><br/>
-      <a href="tel:${c.phone}" 
-        style="background:#7c3aed;color:white;
-        padding:6px 12px;border-radius:6px;
-        text-decoration:none;font-size:12px">
-        📞 Call ${c.name}
-      </a>
-    `)
-    .addTo(map)
-  })
-  // ── END CONTACTS ──
+    // 1. Clear old contact markers
+    contactMarkersRef.current.forEach(m => map.removeLayer(m));
+    contactMarkersRef.current = [];
+
+    // 2. Determine active route coords
+    const activeRoute = selectedRoute || (routes && routes[0]);
+    if (!activeRoute?.coordinates) return;
+
+    // 3. Load user's real saved contacts
+    const savedContacts = JSON.parse(localStorage.getItem('trusted_contacts') || '[]');
+    if (savedContacts.length === 0) return;
+
+    // 4. Filter and add markers
+    savedContacts.forEach(contact => {
+      if (!isContactNearRoute(contact, activeRoute.coordinates)) return;
+
+      const marker = L.circleMarker([contact.lat, contact.lng], {
+        radius: 12,
+        fillColor: '#7c3aed',
+        color: '#ffffff',
+        weight: 2,
+        fillOpacity: 1,
+        interactive: true
+      })
+      .bindTooltip(contact.name, {
+        permanent: true,
+        direction: 'top',
+        offset: [0, -14],
+        className: 'contact-label'
+      })
+      .bindPopup(`
+        <div style="background:#1a2332; color:white; padding:12px; border-radius:10px; min-width:170px; border:1px solid #7c3aed; font-family:sans-serif;">
+          <div style="color:#a78bfa; font-weight:600; font-size:14px; margin-bottom:6px;">👤 ${contact.name}</div>
+          <div style="color:#94a3b8; font-size:12px; margin-bottom:4px;">📍 ${contact.address}</div>
+          <div style="color:#94a3b8; font-size:12px; margin-bottom:10px;">🔗 ${contact.relation}</div>
+          <a href="tel:${contact.phone}" style="display:block; background:linear-gradient(135deg,#7c3aed,#ec4899); color:white; text-align:center; padding:8px; border-radius:6px; text-decoration:none; font-size:13px; font-weight:500;">
+            📞 Call ${contact.name}
+          </a>
+        </div>
+      `);
+
+      marker.addTo(map);
+      contactMarkersRef.current.push(marker);
+    });
+  }, [map, selectedRoute, routes]);
 
   useEffect(() => {
     if (!map || !routes?.length) return

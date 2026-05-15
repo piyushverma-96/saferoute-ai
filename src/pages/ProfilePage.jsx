@@ -23,64 +23,107 @@ const geocodeContact = async (address) => {
 }
 
 const ContactManager = () => {
-  const [contacts, setContacts] = useState([])
+  const [contacts, setContacts] = useState(() => {
+    return JSON.parse(localStorage.getItem('trusted_contacts') || '[]')
+  })
   const [isAdding, setIsAdding] = useState(false)
   const [newContact, setNewContact] = useState({
     name: '',
     phone: '',
     relation: '',
-    address: ''
+    address: '',
+    lat: null,
+    lng: null
   })
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    const saved = localStorage.getItem('trusted_contacts')
-    if (saved) setContacts(JSON.parse(saved))
-  }, [])
-
-  const saveContacts = (updated) => {
-    setContacts(updated)
-    localStorage.setItem('trusted_contacts', JSON.stringify(updated))
+  const geocodeAddress = async (address) => {
+    if (!address || address.length < 3) return null
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`
+      )
+      const data = await res.json()
+      if (data[0]) {
+        return {
+          lat: parseFloat(data[0].lat),
+          lng: parseFloat(data[0].lon)
+        }
+      }
+    } catch(e) {
+      console.error('Geocode failed:', e)
+    }
+    return null
   }
 
-  const handleAdd = async (e) => {
+  const addContact = async (e) => {
     e.preventDefault()
+    if (!newContact.name || !newContact.phone) return
     setLoading(true)
     
-    let coords = { lat: null, lng: null }
+    let location = { lat: null, lng: null }
     if (newContact.address) {
-      const res = await geocodeContact(newContact.address)
-      if (res) coords = res
+      const geo = await geocodeAddress(newContact.address)
+      if (geo) location = geo
     }
-
-    const contactToAdd = { ...newContact, ...coords }
-    const updated = [...contacts, contactToAdd]
-    saveContacts(updated)
-    setNewContact({ name: '', phone: '', relation: '', address: '' })
+    
+    const contact = {
+      id: Date.now(),
+      name: newContact.name,
+      phone: newContact.phone,
+      relation: newContact.relation,
+      address: newContact.address,
+      lat: location.lat,
+      lng: location.lng
+    }
+    
+    const updated = [...contacts, contact]
+    setContacts(updated)
+    localStorage.setItem('trusted_contacts', JSON.stringify(updated))
+    
+    setNewContact({ name:'', phone:'', relation:'', address:'', lat:null, lng:null })
     setIsAdding(false)
     setLoading(false)
+    
+    alert(`${contact.name} added! ${location.lat ? 'Location found ✅' : 'No location found - try adding "Indore" to address'}`)
   }
 
-  const removeContact = (index) => {
-    const updated = contacts.filter((_, i) => i !== index)
-    saveContacts(updated)
+  const loadDemoContacts = () => {
+    const demoContacts = [
+      { id: 1, name: 'Mom', phone: '9876543210', relation: 'Family', address: 'Mhow, Indore', lat: 22.5518, lng: 75.7587 },
+      { id: 2, name: 'Best Friend', phone: '9123456789', relation: 'Friend', address: 'Pithampur, Indore', lat: 22.6177, lng: 75.6953 },
+      { id: 3, name: 'Uncle', phone: '9988776655', relation: 'Family', address: 'Sanwer Road, Indore', lat: 22.6800, lng: 75.8100 }
+    ]
+    localStorage.setItem('trusted_contacts', JSON.stringify(demoContacts))
+    setContacts(demoContacts)
+    alert('Demo contacts loaded! Search Indore → Pithampur route to see them on map ✅')
   }
 
   return (
     <div className="space-y-4">
-      {contacts.map((contact, i) => (
+      <button 
+        onClick={loadDemoContacts}
+        className="w-full p-3 text-xs bg-brand-surface border border-brand-purple/30 text-brand-purple rounded-lg hover:bg-brand-purple/5 transition-all flex items-center justify-center gap-2 font-medium mb-2"
+      >
+        🎯 Load Demo Contacts (for testing)
+      </button>
+
+      {contacts.map((c, i) => (
         <div key={i} className="flex items-center justify-between p-3 bg-brand-surface/50 rounded-lg border border-brand-border/30">
           <div>
-            <div className="font-semibold text-brand-text-primary">{contact.name}</div>
-            <div className="text-xs text-brand-text-secondary">{contact.relation} • {contact.phone}</div>
-            {contact.address && (
-              <div className="text-[10px] text-brand-purple flex items-center gap-1 mt-1">
-                <Map size={10} /> {contact.address} {contact.lat ? '✓' : '✗'}
-              </div>
-            )}
+            <div className="font-semibold text-brand-text-primary">👤 {c.name}</div>
+            <div className="text-xs text-brand-text-secondary">📞 {c.phone} • 🔗 {c.relation}</div>
+            <div className="text-[10px] text-brand-text-muted mt-1 flex items-center gap-1">
+              📍 {c.address || 'No address saved'}
+              {c.lat ? <span className="text-brand-safe font-bold">✅</span> : <span className="text-brand-danger font-bold">❌ No Location</span>}
+            </div>
           </div>
           <button 
-            onClick={() => removeContact(i)}
+            onClick={() => {
+              const updated = contacts.filter((_, idx) => idx !== i)
+              setContacts(updated)
+              localStorage.setItem('trusted_contacts', JSON.stringify(updated))
+            }}
             className="p-2 text-brand-danger hover:bg-brand-danger/10 rounded-lg transition-colors"
           >
             <X size={16} />
@@ -89,45 +132,49 @@ const ContactManager = () => {
       ))}
 
       {isAdding ? (
-        <form onSubmit={handleAdd} className="p-4 bg-brand-surface rounded-lg border border-brand-purple/30 space-y-3">
+        <form onSubmit={addContact} className="p-4 bg-brand-surface rounded-lg border border-brand-purple/30 space-y-3">
           <input
-            placeholder="Name"
+            placeholder="Full Name *"
             className="w-full bg-brand-bg border border-brand-border rounded-lg p-2 text-sm focus:border-brand-purple outline-none"
             value={newContact.name}
             onChange={e => setNewContact({...newContact, name: e.target.value})}
             required
           />
           <input
-            placeholder="Phone Number"
+            placeholder="Phone Number *"
             className="w-full bg-brand-bg border border-brand-border rounded-lg p-2 text-sm focus:border-brand-purple outline-none"
             value={newContact.phone}
             onChange={e => setNewContact({...newContact, phone: e.target.value})}
             required
           />
           <input
-            placeholder="Relation (e.g. Mom, Friend)"
+            placeholder="Relation (Mom/Friend/etc)"
             className="w-full bg-brand-bg border border-brand-border rounded-lg p-2 text-sm focus:border-brand-purple outline-none"
             value={newContact.relation}
             onChange={e => setNewContact({...newContact, relation: e.target.value})}
           />
           <input
-            placeholder="Their area/address (for safety tracking)"
+            placeholder="Their area/address e.g. Vijay Nagar, Indore *"
             className="w-full bg-brand-bg border border-brand-border rounded-lg p-2 text-sm focus:border-brand-purple outline-none"
             value={newContact.address}
             onChange={e => setNewContact({...newContact, address: e.target.value})}
+            required
           />
+          <div className="text-[10px] text-brand-text-muted italic">
+            ⚠ Address is required to show them on your route map.
+          </div>
           <div className="flex gap-2 pt-2">
             <button 
               type="submit" 
               disabled={loading}
               className="flex-1 bg-gradient-brand text-white p-2 rounded-lg text-sm font-medium disabled:opacity-50"
             >
-              {loading ? 'Geocoding...' : 'Save Contact'}
+              {loading ? 'Finding Location...' : '+ Add Contact'}
             </button>
             <button 
               type="button"
               onClick={() => setIsAdding(false)}
-              className="px-4 py-2 border border-brand-border rounded-lg text-sm"
+              className="px-4 py-2 border border-brand-border rounded-lg text-sm text-brand-text-secondary"
             >
               Cancel
             </button>
