@@ -349,7 +349,7 @@ export default function Sidebar({
             ))}
           </div>
 
-          {selectedRoute && (
+          {selectedRoute !== null && (
             <div style={{
               marginTop: '16px',
               background: '#1a2332',
@@ -357,6 +357,7 @@ export default function Sidebar({
               padding: '14px',
               border: '1px solid #1e293b'
             }}>
+              
               <div style={{
                 fontSize: '12px',
                 color: '#64748b',
@@ -390,13 +391,27 @@ export default function Sidebar({
                 display: 'flex',
                 alignItems: 'center',
                 marginBottom: '14px',
-                padding: '10px',
+                padding: '8px',
                 background: '#0f1724',
-                borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.05)'
+                borderRadius: '8px'
               }}>
-                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981', flexShrink: 0 }}/>
-                <div style={{ flex: 1, height: '2px', background: '#1e293b', position: 'relative', margin: '0 6px' }}>
+                {/* Start */}
+                <div style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  background: '#10b981',
+                  flexShrink: 0
+                }}/>
+                
+                {/* Route line with stops */}
+                <div style={{
+                  flex: 1,
+                  height: '2px',
+                  background: '#1e293b',
+                  position: 'relative',
+                  margin: '0 4px'
+                }}>
                   {safeStops.map((stop, i) => {
                     const routeIndex = routes.findIndex(r => r.id === selectedRoute.id);
                     let isOnline = stop.isOnline;
@@ -409,75 +424,34 @@ export default function Sidebar({
                         left: `${stop.position * 100}%`,
                         top: '50%',
                         transform: 'translate(-50%,-50%)',
-                        width: '24px',
-                        height: '24px',
+                        width: '20px',
+                        height: '20px',
                         borderRadius: '50%',
                         background: isOnline ? '#10b981' : '#374151',
                         border: '2px solid #0f1724',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '12px',
-                        zIndex: 2,
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                        fontSize: '10px'
                       }}>
                         {stop.avatar}
                       </div>
                     );
                   })}
                 </div>
-                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ef4444', flexShrink: 0 }}/>
+                
+                {/* End */}
+                <div style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  background: '#ef4444',
+                  flexShrink: 0
+                }}/>
               </div>
 
-              {isMobile ? (
-                /* STEP 3 - MOBILE HORIZONTAL SCROLL */
-                <div style={{
-                  display: 'flex',
-                  gap: '10px',
-                  overflowX: 'auto',
-                  paddingBottom: '8px',
-                  scrollbarWidth: 'none'
-                }}>
-                  {safeStops.map((stop, i) => {
-                    const routeIndex = routes.findIndex(r => r.id === selectedRoute.id);
-                    let isOnline = stop.isOnline;
-                    if (routeIndex === 0) isOnline = true;
-                    if (routeIndex === 1) isOnline = (i < 2);
-                    if (routeIndex === 2) isOnline = (i < 1);
-                    return (
-                      <div key={i} style={{
-                        flexShrink: 0,
-                        background: '#1a2332',
-                        border: `1px solid ${isOnline ? '#10b981' : '#1e293b'}`,
-                        borderRadius: '10px',
-                        padding: '10px 12px',
-                        minWidth: '100px',
-                        textAlign: 'center'
-                      }}>
-                        <div style={{fontSize: '22px'}}>{stop.avatar}</div>
-                        <div style={{ color: '#f1f5f9', fontSize: '11px', fontWeight: '500', margin: '4px 0 2px' }}>
-                          {stop.name}
-                        </div>
-                        <div style={{ color: isOnline ? '#10b981' : '#64748b', fontSize: '9px', marginBottom: '6px' }}>
-                          {isOnline ? '🟢 Online' : '⚫ Offline'}
-                        </div>
-                        <a href={`tel:${stop.phone}`} style={{
-                          display: 'block',
-                          background: 'rgba(124,58,237,0.2)',
-                          border: '1px solid #7c3aed',
-                          borderRadius: '6px',
-                          padding: '4px',
-                          color: '#a78bfa',
-                          fontSize: '12px',
-                          textDecoration: 'none',
-                          fontWeight: '600'
-                        }}>📞 Call</a>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                /* STEP 2 - DESKTOP STOPS LIST */
+              {/* Stops list (Desktop) or Horizontal Scroll (Mobile) */}
+              {!isMobile ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {safeStops.map((stop, i) => {
                     const routeIndex = routes.findIndex(r => r.id === selectedRoute.id);
@@ -495,6 +469,7 @@ export default function Sidebar({
                         borderRadius: '10px',
                         border: `1px solid ${isOnline ? 'rgba(16,185,129,0.2)' : '#1e293b'}`
                       }}>
+                        {/* Stop number */}
                         <div style={{
                           width: '22px',
                           height: '22px',
@@ -508,7 +483,11 @@ export default function Sidebar({
                           fontWeight: '600',
                           flexShrink: 0
                         }}>{i + 1}</div>
+
+                        {/* Avatar */}
                         <div style={{ fontSize: '22px', flexShrink: 0 }}>{stop.avatar}</div>
+
+                        {/* Info */}
                         <div style={{flex: 1}}>
                           <div style={{ color: '#f1f5f9', fontSize: '13px', fontWeight: '500' }}>{stop.name}</div>
                           <div style={{ color: '#64748b', fontSize: '11px' }}>📍 {stop.address}</div>
@@ -516,6 +495,8 @@ export default function Sidebar({
                             {isOnline ? '🟢 Safe to stop here' : '⚫ Offline'}
                           </div>
                         </div>
+
+                        {/* Call button */}
                         <a href={`tel:${stop.phone}`} style={{
                           background: isOnline ? 'rgba(16,185,129,0.15)' : '#1e293b',
                           border: `1px solid ${isOnline ? '#10b981' : '#374151'}`,
@@ -530,8 +511,63 @@ export default function Sidebar({
                     );
                   })}
                 </div>
+              ) : (
+                <div style={{
+                  marginTop: '10px',
+                  borderTop: '1px solid #1e293b',
+                  paddingTop: '10px'
+                }}>
+                  <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '8px' }}>
+                    🛡 Safe Stops On Route
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    gap: '8px',
+                    overflowX: 'auto',
+                    paddingBottom: '4px',
+                    scrollbarWidth: 'none'
+                  }}>
+                    {safeStops.map((stop, i) => {
+                      const routeIndex = routes.findIndex(r => r.id === selectedRoute.id);
+                      let isOnline = stop.isOnline;
+                      if (routeIndex === 0) isOnline = true;
+                      if (routeIndex === 1) isOnline = (i < 2);
+                      if (routeIndex === 2) isOnline = (i < 1);
+                      return (
+                        <div key={i} style={{
+                          flexShrink: 0,
+                          background: '#1a2332',
+                          border: `1px solid ${isOnline ? '#10b981' : '#1e293b'}`,
+                          borderRadius: '10px',
+                          padding: '10px 12px',
+                          minWidth: '100px',
+                          textAlign: 'center'
+                        }}>
+                          <div style={{fontSize: '22px'}}>{stop.avatar}</div>
+                          <div style={{ color: '#f1f5f9', fontSize: '11px', fontWeight: '500', margin: '4px 0 2px' }}>
+                            {stop.name}
+                          </div>
+                          <div style={{ color: isOnline ? '#10b981' : '#64748b', fontSize: '9px', marginBottom: '6px' }}>
+                            {isOnline ? '🟢 Online' : '⚫ Offline'}
+                          </div>
+                          <a href={`tel:${stop.phone}`} style={{
+                            display: 'block',
+                            background: 'rgba(124,58,237,0.2)',
+                            border: '1px solid #7c3aed',
+                            borderRadius: '6px',
+                            padding: '4px',
+                            color: '#a78bfa',
+                            fontSize: '12px',
+                            textDecoration: 'none'
+                          }}>📞 Call</a>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
 
+              {/* Safety tip */}
               <div style={{
                 background: 'rgba(124,58,237,0.1)',
                 border: '1px solid #7c3aed',
@@ -540,14 +576,12 @@ export default function Sidebar({
                 fontSize: '11px',
                 color: '#a78bfa',
                 textAlign: 'center',
-                marginTop: '10px'
+                marginTop: '4px'
               }}>
                 💡 Tap any stop on map to call or message your contact
               </div>
             </div>
           )}
-        </div>
-      )}
         </div>
       )}
       
