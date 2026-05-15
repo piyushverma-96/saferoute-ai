@@ -45,32 +45,57 @@ export const mockStats = {
   activeUsers: 89
 };
 
-export const MOCK_CONTACTS = [
+export const mockContacts = [
   {
     id: 1,
     name: 'Mom',
-    phone: '9876543210',
-    relation: 'Family',
-    address: 'Vijay Nagar, Indore',
-    lat: 22.7533,
-    lng: 75.8937
+    phone: '+91 98765 43210',
+    avatar: '👩',
+    location: {
+      lat: 22.7250,
+      lng: 75.8800,
+      address: 'Vijay Nagar, Indore'
+    },
+    isOnline: true,
+    lastSeen: 'Just now'
   },
   {
     id: 2,
     name: 'Best Friend',
-    phone: '9123456789',
-    relation: 'Friend',
-    address: 'Palasia, Indore',
-    lat: 22.7196,
-    lng: 75.8577
+    phone: '+91 87654 32109',
+    avatar: '👧',
+    location: {
+      lat: 22.7150,
+      lng: 75.8650,
+      address: 'Palasia, Indore'
+    },
+    isOnline: true,
+    lastSeen: '2 min ago'
   },
   {
     id: 3,
-    name: 'Colleague',
-    phone: '9988776655',
-    relation: 'Colleague',
-    address: 'Rajwada, Indore',
-    lat: 22.7300,
-    lng: 75.8700
+    name: 'Sister',
+    phone: '+91 76543 21098',
+    avatar: '👱‍♀️',
+    location: {
+      lat: 22.7300,
+      lng: 75.8750,
+      address: 'Rajwada, Indore'
+    },
+    isOnline: false,
+    lastSeen: '15 min ago'
+  },
+  {
+    id: 4,
+    name: 'College Friend',
+    phone: '+91 65432 10987',
+    avatar: '🧑',
+    location: {
+      lat: 22.7180,
+      lng: 75.8900,
+      address: 'MG Road, Indore'
+    },
+    isOnline: true,
+    lastSeen: 'Just now'
   }
 ]

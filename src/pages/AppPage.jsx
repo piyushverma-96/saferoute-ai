@@ -238,6 +238,7 @@ export default function AppPage() {
             gpsAccuracy={gpsAccuracy}
             detectLocation={detectLocation}
             error={error}
+            isMobile={isMobile}
           />
         </div>
       )}
@@ -320,6 +321,7 @@ export default function AppPage() {
                 gpsAccuracy={gpsAccuracy}
                 detectLocation={detectLocation}
                 error={error}
+                isMobile={isMobile}
               />
             </div>
           </div>

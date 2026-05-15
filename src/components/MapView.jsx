@@ -2,7 +2,19 @@ import React, { useEffect, useRef } from 'react'
 import { MapContainer, TileLayer, Polyline, Marker, useMap, ZoomControl } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { getContactsNearRoute } from '../utils/contactUtils'
+import { mockContacts } from '../data/mockData'
+
+const isContactNearRoute = (contactLoc, routeCoords) => {
+  if (!contactLoc || !routeCoords?.length) return false
+  return routeCoords.some(([lat, lng]) => {
+    // Simple rough distance check as requested (~500m-800m)
+    const dist = Math.sqrt(
+      Math.pow(lat - contactLoc.lat, 2) +
+      Math.pow(lng - contactLoc.lng, 2)
+    )
+    return dist < 0.008
+  })
+}
 
 const MapUpdater = ({ 
   selectedRoute, 
@@ -23,42 +35,80 @@ const MapUpdater = ({
     const activeRoute = selectedRoute || (routes && routes[0]);
     if (!activeRoute?.coordinates) return;
 
-    // 3. Get contacts near this route using utility
-    const nearbyContacts = getContactsNearRoute(activeRoute.coordinates, 1.5);
-    
-    if (nearbyContacts.length === 0) return;
+    // 3. Filter mock contacts near route
+    mockContacts.forEach(contact => {
+      if (isContactNearRoute(contact.location, activeRoute.coordinates)) {
+        const markerHtml = `
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <div style="
+              background: ${contact.isOnline ? '#10b981' : '#64748b'};
+              border: 3px solid white;
+              border-radius: 50%;
+              width: 40px;
+              height: 40px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 18px;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+              cursor: pointer;
+            ">
+              ${contact.avatar}
+            </div>
+            <div style="
+              background: rgba(0,0,0,0.8);
+              color: white;
+              font-size: 10px;
+              padding: 2px 6px;
+              border-radius: 4px;
+              text-align: center;
+              margin-top: 2px;
+              white-space: nowrap;
+              font-weight: 600;
+            ">
+              ${contact.name}
+            </div>
+          </div>
+        `
 
-    // 4. Add markers for each nearby contact
-    nearbyContacts.forEach(contact => {
-      const marker = L.circleMarker([contact.lat, contact.lng], {
-        radius: 13,
-        fillColor: '#7c3aed',
-        color: '#ffffff',
-        weight: 3,
-        fillOpacity: 1,
-        interactive: true,
-        zIndexOffset: 1000
-      })
-      .bindTooltip(`👤 ${contact.name}`, {
-        permanent: true,
-        direction: 'top',
-        offset: [0, -16],
-        className: 'contact-label'
-      })
-      .bindPopup(`
-        <div style="background:#1a2332; color:white; padding:14px; border-radius:12px; min-width:180px; border:1px solid #7c3aed; font-family:sans-serif;">
-          <div style="color:#a78bfa; font-weight:700; font-size:15px; margin-bottom:8px;">👤 ${contact.name}</div>
-          <div style="color:#94a3b8; font-size:12px; margin-bottom:4px;">📍 ${contact.address}</div>
-          <div style="color:#94a3b8; font-size:12px; margin-bottom:12px;">🔗 ${contact.relation}</div>
-          <a href="tel:${contact.phone}" style="display:block; background:linear-gradient(135deg,#7c3aed,#ec4899); color:white; text-align:center; padding:10px; border-radius:8px; text-decoration:none; font-size:13px; font-weight:600;">
-            📞 Call ${contact.name}
-          </a>
-        </div>
-      `, { maxWidth: 220 });
+        const icon = L.divIcon({
+          html: markerHtml,
+          className: '',
+          iconSize: [40, 55],
+          iconAnchor: [20, 55]
+        })
 
-      marker.addTo(map);
-      contactMarkersRef.current.push(marker);
-    });
+        const marker = L.marker(
+          [contact.location.lat, contact.location.lng],
+          { icon }
+        ).addTo(map)
+
+        marker.bindPopup(`
+          <div style="background: #1a2332; color: #f1f5f9; padding: 12px; border-radius: 8px; min-width: 160px; font-family: sans-serif;">
+            <div style="font-size: 24px; text-align: center; margin-bottom: 8px;">
+              ${contact.avatar}
+            </div>
+            <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px; text-align: center;">
+              ${contact.name}
+            </div>
+            <div style="color: ${contact.isOnline ? '#10b981' : '#64748b'}; font-size: 12px; margin-bottom: 8px; text-align: center;">
+              ${contact.isOnline ? '🟢 Online' : '⚫ ' + contact.lastSeen}
+            </div>
+            <div style="color: #94a3b8; font-size: 11px; margin-bottom: 12px; text-align: center;">
+              📍 ${contact.location.address}
+            </div>
+            <a href="tel:${contact.phone}"
+              style="display: block; background: linear-gradient(135deg, #7c3aed, #ec4899); color: white; text-align: center; padding: 10px; border-radius: 8px; font-size: 12px; text-decoration: none; font-weight: 600;">
+              📞 Call ${contact.name}
+            </a>
+          </div>
+        `, {
+          className: 'custom-popup'
+        })
+
+        contactMarkersRef.current.push(marker)
+      }
+    })
   }, [map, selectedRoute, routes]);
 
   useEffect(() => {
