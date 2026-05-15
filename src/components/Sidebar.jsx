@@ -4,18 +4,7 @@ import { MapPin, Navigation, Clock, Search, Sun, Sunset, Moon, Volume2, VolumeX 
 import RouteCard from './RouteCard';
 import SkeletonCard from './SkeletonCard';
 import { useVoiceNavigation } from '../hooks/useVoiceNavigation';
-import { mockContacts } from '../data/mockData';
-
-const isContactNearRoute = (contactLoc, routeCoords) => {
-  if (!contactLoc || !routeCoords?.length) return false
-  return routeCoords.some(([lat, lng]) => {
-    const dist = Math.sqrt(
-      Math.pow(lat - contactLoc.lat, 2) +
-      Math.pow(lng - contactLoc.lng, 2)
-    )
-    return dist < 0.008
-  })
-}
+import { mockContacts, safeStops } from '../data/mockData';
 
 export default function Sidebar({ 
   startQuery, 
@@ -373,13 +362,75 @@ export default function Sidebar({
                 color: '#64748b',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
-                marginBottom: '12px'
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
               }}>
-                👥 Contacts On This Route
+                🛡 Safe Stops On Your Route
+                <span style={{
+                  background: '#7c3aed',
+                  color: 'white',
+                  fontSize: '10px',
+                  padding: '1px 6px',
+                  borderRadius: '10px'
+                }}>
+                  {(() => {
+                    const routeIndex = routes.findIndex(r => r.id === selectedRoute.id);
+                    if (routeIndex === 0) return 3;
+                    if (routeIndex === 1) return 2;
+                    if (routeIndex === 2) return 1;
+                    return 0;
+                  })()} online
+                </span>
+              </div>
+
+              {/* Route visualization */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                marginBottom: '14px',
+                padding: '10px',
+                background: '#0f1724',
+                borderRadius: '8px',
+                border: '1px solid rgba(255,255,255,0.05)'
+              }}>
+                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981', flexShrink: 0 }}/>
+                <div style={{ flex: 1, height: '2px', background: '#1e293b', position: 'relative', margin: '0 6px' }}>
+                  {safeStops.map((stop, i) => {
+                    const routeIndex = routes.findIndex(r => r.id === selectedRoute.id);
+                    let isOnline = stop.isOnline;
+                    if (routeIndex === 0) isOnline = true;
+                    if (routeIndex === 1) isOnline = (i < 2);
+                    if (routeIndex === 2) isOnline = (i < 1);
+                    return (
+                      <div key={i} style={{
+                        position: 'absolute',
+                        left: `${stop.position * 100}%`,
+                        top: '50%',
+                        transform: 'translate(-50%,-50%)',
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        background: isOnline ? '#10b981' : '#374151',
+                        border: '2px solid #0f1724',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '12px',
+                        zIndex: 2,
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                      }}>
+                        {stop.avatar}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ef4444', flexShrink: 0 }}/>
               </div>
 
               {isMobile ? (
-                /* STEP 4 - MOBILE HORIZONTAL SCROLL */
+                /* STEP 3 - MOBILE HORIZONTAL SCROLL */
                 <div style={{
                   display: 'flex',
                   gap: '10px',
@@ -387,131 +438,116 @@ export default function Sidebar({
                   paddingBottom: '8px',
                   scrollbarWidth: 'none'
                 }}>
-                  {mockContacts
-                    .filter(c => isContactNearRoute(c.location, selectedRoute.coordinates))
-                    .map(contact => (
-                      <div key={contact.id} style={{
+                  {safeStops.map((stop, i) => {
+                    const routeIndex = routes.findIndex(r => r.id === selectedRoute.id);
+                    let isOnline = stop.isOnline;
+                    if (routeIndex === 0) isOnline = true;
+                    if (routeIndex === 1) isOnline = (i < 2);
+                    if (routeIndex === 2) isOnline = (i < 1);
+                    return (
+                      <div key={i} style={{
                         flexShrink: 0,
-                        background: '#0f1724',
+                        background: '#1a2332',
+                        border: `1px solid ${isOnline ? '#10b981' : '#1e293b'}`,
                         borderRadius: '10px',
-                        padding: '12px',
-                        textAlign: 'center',
-                        minWidth: '90px',
-                        border: '1px solid #1e293b',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center'
+                        padding: '10px 12px',
+                        minWidth: '100px',
+                        textAlign: 'center'
                       }}>
-                        <div style={{ position: 'relative', marginBottom: '6px' }}>
-                          <div style={{ fontSize: '24px' }}>{contact.avatar}</div>
-                          <div style={{
-                            position: 'absolute',
-                            bottom: '-2px',
-                            right: '-2px',
-                            width: '10px',
-                            height: '10px',
-                            borderRadius: '50%',
-                            background: contact.isOnline ? '#10b981' : '#64748b',
-                            border: '2px solid #0f1724'
-                          }}/>
+                        <div style={{fontSize: '22px'}}>{stop.avatar}</div>
+                        <div style={{ color: '#f1f5f9', fontSize: '11px', fontWeight: '500', margin: '4px 0 2px' }}>
+                          {stop.name}
                         </div>
-                        <div style={{ color: '#f1f5f9', fontSize: '11px', fontWeight: '500', whiteSpace: 'nowrap' }}>
-                          {contact.name}
+                        <div style={{ color: isOnline ? '#10b981' : '#64748b', fontSize: '9px', marginBottom: '6px' }}>
+                          {isOnline ? '🟢 Online' : '⚫ Offline'}
                         </div>
-                        <a href={`tel:${contact.phone}`} style={{
-                          marginTop: '6px',
+                        <a href={`tel:${stop.phone}`} style={{
+                          display: 'block',
                           background: 'rgba(124,58,237,0.2)',
-                          color: '#a78bfa',
-                          fontSize: '10px',
-                          padding: '4px 8px',
+                          border: '1px solid #7c3aed',
                           borderRadius: '6px',
-                          textDecoration: 'none'
-                        }}>Call</a>
+                          padding: '4px',
+                          color: '#a78bfa',
+                          fontSize: '12px',
+                          textDecoration: 'none',
+                          fontWeight: '600'
+                        }}>📞 Call</a>
                       </div>
-                    ))
-                  }
+                    );
+                  })}
                 </div>
               ) : (
-                /* STEP 3 - DESKTOP VERTICAL LIST */
-                mockContacts
-                  .filter(c => isContactNearRoute(c.location, selectedRoute.coordinates))
-                  .map(contact => (
-                    <div key={contact.id} style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      padding: '10px',
-                      background: '#0f1724',
-                      borderRadius: '10px',
-                      marginBottom: '8px',
-                      border: '1px solid #1e293b'
-                    }}>
-                      <div style={{ position: 'relative', flexShrink: 0 }}>
+                /* STEP 2 - DESKTOP STOPS LIST */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {safeStops.map((stop, i) => {
+                    const routeIndex = routes.findIndex(r => r.id === selectedRoute.id);
+                    let isOnline = stop.isOnline;
+                    if (routeIndex === 0) isOnline = true;
+                    if (routeIndex === 1) isOnline = (i < 2);
+                    if (routeIndex === 2) isOnline = (i < 1);
+                    return (
+                      <div key={stop.id} style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '10px',
+                        background: '#0f1724',
+                        borderRadius: '10px',
+                        border: `1px solid ${isOnline ? 'rgba(16,185,129,0.2)' : '#1e293b'}`
+                      }}>
                         <div style={{
-                          width: '38px',
-                          height: '38px',
+                          width: '22px',
+                          height: '22px',
                           borderRadius: '50%',
-                          background: '#1e293b',
+                          background: '#7c3aed',
+                          color: 'white',
+                          fontSize: '11px',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '20px'
-                        }}>
-                          {contact.avatar}
+                          fontWeight: '600',
+                          flexShrink: 0
+                        }}>{i + 1}</div>
+                        <div style={{ fontSize: '22px', flexShrink: 0 }}>{stop.avatar}</div>
+                        <div style={{flex: 1}}>
+                          <div style={{ color: '#f1f5f9', fontSize: '13px', fontWeight: '500' }}>{stop.name}</div>
+                          <div style={{ color: '#64748b', fontSize: '11px' }}>📍 {stop.address}</div>
+                          <div style={{ color: isOnline ? '#10b981' : '#64748b', fontSize: '10px', marginTop: '1px' }}>
+                            {isOnline ? '🟢 Safe to stop here' : '⚫ Offline'}
+                          </div>
                         </div>
-                        <div style={{
-                          position: 'absolute',
-                          bottom: '1px',
-                          right: '1px',
-                          width: '10px',
-                          height: '10px',
-                          borderRadius: '50%',
-                          background: contact.isOnline ? '#10b981' : '#64748b',
-                          border: '2px solid #1a2332'
-                        }}/>
-                      </div>
-
-                      <div style={{flex: 1}}>
-                        <div style={{ color: '#f1f5f9', fontSize: '13px', fontWeight: '500' }}>
-                          {contact.name}
-                        </div>
-                        <div style={{ color: '#64748b', fontSize: '11px' }}>
-                          📍 {contact.location.address}
-                        </div>
-                        <div style={{
-                          color: contact.isOnline ? '#10b981' : '#64748b',
-                          fontSize: '10px',
-                          marginTop: '2px'
-                        }}>
-                          {contact.isOnline ? '🟢 Online now' : '⚫ ' + contact.lastSeen}
-                        </div>
-                      </div>
-
-                      <a href={`tel:${contact.phone}`}
-                        style={{
-                          background: 'rgba(124,58,237,0.2)',
-                          border: '1px solid #7c3aed',
+                        <a href={`tel:${stop.phone}`} style={{
+                          background: isOnline ? 'rgba(16,185,129,0.15)' : '#1e293b',
+                          border: `1px solid ${isOnline ? '#10b981' : '#374151'}`,
                           borderRadius: '8px',
-                          padding: '8px',
-                          color: '#a78bfa',
-                          fontSize: '16px',
+                          padding: '8px 10px',
+                          color: isOnline ? '#10b981' : '#64748b',
+                          fontSize: '14px',
                           textDecoration: 'none',
                           flexShrink: 0
-                        }}
-                      >
-                        📞
-                      </a>
-                    </div>
-                  ))
-              )}
-
-              {mockContacts.filter(c => isContactNearRoute(c.location, selectedRoute?.coordinates)).length === 0 && (
-                <div style={{ color: '#64748b', fontSize: '12px', textAlign: 'center', padding: '12px' }}>
-                  No contacts near this route
+                        }}>📞</a>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
+
+              <div style={{
+                background: 'rgba(124,58,237,0.1)',
+                border: '1px solid #7c3aed',
+                borderRadius: '8px',
+                padding: '10px',
+                fontSize: '11px',
+                color: '#a78bfa',
+                textAlign: 'center',
+                marginTop: '10px'
+              }}>
+                💡 Tap any stop on map to call or message your contact
+              </div>
             </div>
           )}
+        </div>
+      )}
         </div>
       )}
       

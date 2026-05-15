@@ -99,3 +99,33 @@ export const mockContacts = [
     lastSeen: 'Just now'
   }
 ]
+
+export const safeStops = [
+  {
+    id: 1,
+    name: 'Mom',
+    avatar: '👩',
+    phone: '+91 98765 43210',
+    position: 0.3,
+    isOnline: true,
+    address: 'Near Palasia Square'
+  },
+  {
+    id: 2,
+    name: 'Best Friend',
+    avatar: '👧',
+    phone: '+91 87654 32109',
+    position: 0.6,
+    isOnline: true,
+    address: 'Near Vijay Nagar'
+  },
+  {
+    id: 3,
+    name: 'Sister',
+    avatar: '👱‍♀️',
+    phone: '+91 76543 21098',
+    position: 0.8,
+    isOnline: false,
+    address: 'Near MG Road'
+  }
+]
