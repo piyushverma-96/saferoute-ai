@@ -174,3 +174,9 @@ export function scoreLabel(score) {
   if (score >= 40) return 'Moderate Risk';
   return 'High Risk';
 }
+/**
+ * Simple wrapper to get numeric score only
+ */
+export function calcSafetyScore(routeIdx, travelHour) {
+  return calcSafety(routeIdx, travelHour).score;
+}
