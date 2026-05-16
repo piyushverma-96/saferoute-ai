@@ -411,6 +411,58 @@ export default function Sidebar({
       {/* Routes List Area */}
       {routes.length > 0 && (
         <div style={{ padding: '0 16px' }}>
+          
+          {/* Top Warning Banner */}
+          {routes.every(r => r.score < 40) ? (
+            <div style={{
+              padding: '12px 14px',
+              background: 'rgba(239,68,68,0.1)',
+              border: '1px solid #ef4444',
+              borderRadius: '10px',
+              marginBottom: '12px'
+            }}>
+              <div style={{
+                color: '#ef4444',
+                fontWeight: '700',
+                fontSize: '13px',
+                marginBottom: '4px'
+              }}>
+                🚨 AI Alert: High Risk Area
+              </div>
+              <div style={{
+                color: '#94a3b8',
+                fontSize: '12px',
+                lineHeight: '1.4'
+              }}>
+                All available routes to this destination are unsafe. Consider travelling with someone or at a different time.
+              </div>
+            </div>
+          ) : routes.some(r => r.score < 40) ? (
+            <div style={{
+              padding: '12px 14px',
+              background: 'rgba(245,158,11,0.1)',
+              border: '1px solid #f59e0b',
+              borderRadius: '10px',
+              marginBottom: '12px'
+            }}>
+              <div style={{
+                color: '#f59e0b',
+                fontWeight: '700',
+                fontSize: '13px',
+                marginBottom: '4px'
+              }}>
+                ⚠️ AI Warning: Some Routes Unsafe
+              </div>
+              <div style={{
+                color: '#94a3b8',
+                fontSize: '12px',
+                lineHeight: '1.4'
+              }}>
+                {routes.filter(r => r.score < 40).length} route(s) flagged as unsafe by AI. Choose the green route for maximum safety.
+              </div>
+            </div>
+          ) : null}
+
           <p style={{
             color: '#888',
             fontSize: '11px',

@@ -99,20 +99,78 @@ export function calcSafety(routeIdx, travelHour) {
   };
 }
 
+// Unsafe zones - hardcoded for demo
+export const UNSAFE_ZONES = {
+  'vijay nagar': {
+    level: 'all_unsafe',
+    scores: [38, 29, 19], // all 3 unsafe
+    reason: 'High crime rate, poor lighting, no CCTV coverage'
+  },
+  'rajwada': {
+    level: 'partial_unsafe', 
+    scores: [72, 35, 28], // 1 safe, 2 unsafe
+    reason: 'Crowded area, 2 routes through dark lanes'
+  },
+  'palasia': {
+    level: 'partial_unsafe',
+    scores: [68, 41, 33],
+    reason: 'Mixed safety - some areas risky'
+  }
+}
+
+// Check if destination is in unsafe zone
+export const getUnsafeZoneData = (destination) => {
+  if (!destination) return null
+  
+  const dest = destination.toLowerCase()
+  
+  for (const zone in UNSAFE_ZONES) {
+    if (dest.includes(zone)) {
+      return UNSAFE_ZONES[zone]
+    }
+  }
+  return null
+}
+
+// Get safety label and color by score
+export const getSafetyLevel = (score) => {
+  if (score >= 60) return {
+    label: 'SAFE',
+    color: '#10b981',
+    icon: '🟢',
+    bg: 'rgba(16,185,129,0.1)',
+    border: '#10b981'
+  }
+  if (score >= 40) return {
+    label: 'MODERATE',
+    color: '#f59e0b', 
+    icon: '🟡',
+    bg: 'rgba(245,158,11,0.1)',
+    border: '#f59e0b'
+  }
+  return {
+    label: 'UNSAFE',
+    color: '#ef4444',
+    icon: '🔴',
+    bg: 'rgba(239,68,68,0.1)',
+    border: '#ef4444'
+  }
+}
+
 /**
  * Color based on final safety score
  */
 export function scoreColor(score) {
-  if (score >= 70) return 'var(--color-brand-safe)';    // Green
-  if (score >= 40) return 'var(--color-brand-warning)'; // Amber
-  return 'var(--color-brand-danger)';                    // Red
+  if (score >= 60) return '#10b981';    // Green
+  if (score >= 40) return '#f59e0b'; // Amber
+  return '#ef4444';                    // Red
 }
 
 /**
  * Label based on score
  */
 export function scoreLabel(score) {
-  if (score >= 70) return 'Safe';
+  if (score >= 60) return 'Safe';
   if (score >= 40) return 'Moderate Risk';
   return 'High Risk';
 }

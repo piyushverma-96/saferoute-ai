@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { geocode } from '../utils/geocoding';
+import { getUnsafeZoneData, getSafetyLevel } from '../utils/safetyScore';
 
 // Haversine distance formula
 const getDistanceKm = (lat1, lng1, lat2, lng2) => {
@@ -241,84 +242,66 @@ export function useRoutes() {
             
         const d0 = data.routes[0].distance;
         const t0 = data.routes[0].duration;
+
+        const unsafeZone = getUnsafeZoneData(endQuery);
         
         const rawRoutes = [
           {
             id: 1,
             name: 'Safest Route',
             type: 'safe',
-            color: '#00C896',
-            weight: 6,
-            dashArray: null,
             coordinates: safeCoords,
-            score: Math.max(0, 85 - penalty),
+            score: unsafeZone ? unsafeZone.scores[0] : Math.max(0, 85 - penalty),
             distance: (d0*1.1/1000).toFixed(1),
             durMin: Math.round(t0*1.15/60),
             duration: Math.round(t0*1.15/60),
             dist: (d0*1.1/1000).toFixed(1) + ' km',
             time: Math.round(t0*1.15/60) + ' min',
             tags: ['CCTV','Well Lit','Police Nearby'],
-            factors: [
-              {icon:'💡', name:'Street Lighting',score:9},
-              {icon:'📹', name:'CCTV Coverage',score:8},
-              {icon:'🚔', name:'Police Proximity',score:9},
-              {icon:'👥', name:'Crowd Density',score:7},
-              {icon:'📊', name:'Crime History',score:8}
-            ],
+            unsafeReason: unsafeZone?.reason || null,
             confidence: 94
           },
           {
             id: 2,
             name: 'Balanced Route',
             type: 'moderate',
-            color: '#F59E0B',
-            weight: 5,
-            dashArray: '10 6',
             coordinates: moderateCoords,
-            score: Math.max(0, 65 - penalty),
+            score: unsafeZone ? unsafeZone.scores[1] : Math.max(0, 65 - penalty),
             distance: (d0/1000).toFixed(1),
             durMin: Math.round(t0/60),
             duration: Math.round(t0/60),
             dist: (d0/1000).toFixed(1) + ' km',
             time: Math.round(t0/60) + ' min',
             tags: ['Moderate Risk','Some Lighting'],
-            factors: [
-              {icon:'💡', name:'Street Lighting',score:6},
-              {icon:'📹', name:'CCTV Coverage',score:5},
-              {icon:'🚔', name:'Police Proximity',score:6},
-              {icon:'👥', name:'Crowd Density',score:7},
-              {icon:'📊', name:'Crime History',score:5}
-            ],
+            unsafeReason: unsafeZone?.reason || null,
             confidence: 87
           },
           {
             id: 3,
             name: 'High Risk Route',
             type: 'risky',
-            color: '#FF6B6B',
-            weight: 4,
-            dashArray: '6 8',
             coordinates: riskyCoords,
-            score: Math.max(0, 35 - penalty),
+            score: unsafeZone ? unsafeZone.scores[2] : Math.max(0, 35 - penalty),
             distance: (d0*0.9/1000).toFixed(1),
             durMin: Math.round(t0*0.85/60),
             duration: Math.round(t0*0.85/60),
             dist: (d0*0.9/1000).toFixed(1) + ' km',
             time: Math.round(t0*0.85/60) + ' min',
             tags: ['⚠ High Risk','Poor Lighting','No CCTV'],
-            factors: [
-              {icon:'💡', name:'Street Lighting',score:3},
-              {icon:'📹', name:'CCTV Coverage',score:2},
-              {icon:'🚔', name:'Police Proximity',score:3},
-              {icon:'👥', name:'Crowd Density',score:4},
-              {icon:'📊', name:'Crime History',score:2}
-            ],
+            unsafeReason: unsafeZone?.reason || null,
             confidence: 91
           }
         ].map(route => {
+          const safety = getSafetyLevel(route.score);
           const savedContacts = JSON.parse(localStorage.getItem('trusted_contacts') || '[]');
+          
           return {
             ...route,
+            color: safety.color,
+            label: safety.label,
+            icon: safety.icon,
+            bg: safety.bg,
+            border: safety.border,
             nearbyContacts: findContactsNearRoute(route.coordinates, savedContacts)
           };
         });

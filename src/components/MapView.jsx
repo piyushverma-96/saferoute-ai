@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { MapContainer, TileLayer, Polyline, Marker, useMap, ZoomControl } from 'react-leaflet'
+import { MapContainer, TileLayer, Polyline, Marker, useMap, ZoomControl, Popup } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { isContactNearRoute } from '../utils/contactUtils'
@@ -164,7 +164,7 @@ const MapView = ({
       
       {routes.map((route, index) => {
         const isSelected = selectedRoute?.id === route.id
-        const noneSelected = !selectedRoute
+        const isUnsafe = route.score < 40
         
         return (
           <Polyline
@@ -172,16 +172,77 @@ const MapView = ({
             positions={route.coordinates || []}
             pathOptions={{
               color: route.color,
-              // Recommended route is thick and solid, others are dashed
-              weight: isSelected ? 10 : (route.recommended ? 7 : 4),
-              opacity: noneSelected ? (route.recommended ? 1 : 0.6) : isSelected ? 1.0 : 0.2,
-              dashArray: route.recommended ? null : '8, 8',
+              weight: isSelected ? 8 : 5,
+              opacity: isSelected ? 1 : 0.6,
+              dashArray: isUnsafe ? '10, 10' : (isSelected ? null : '12, 8'),
               smoothFactor: 5,
               lineCap: 'round',
               lineJoin: 'round'
             }}
             eventHandlers={{ click: () => onRouteSelect && onRouteSelect(index) }}
-          />
+          >
+            <Popup>
+              <div style={{
+                background: '#1a2332',
+                color: 'white',
+                padding: '12px',
+                borderRadius: '10px',
+                minWidth: '190px',
+                border: `1px solid ${route.color}`,
+                fontFamily: 'sans-serif'
+              }}>
+                <div style={{
+                  color: route.color,
+                  fontWeight: '700',
+                  fontSize: '15px',
+                  marginBottom: '8px'
+                }}>
+                  {route.icon} {route.label} ROUTE
+                </div>
+                <div style={{
+                  font_size: '22px',
+                  fontWeight: '700',
+                  color: route.color,
+                  marginBottom: '4px'
+                }}>
+                  {route.score}<span style={{
+                    fontSize: '12px',
+                    color: '#64748b'
+                  }}>/100</span>
+                </div>
+                <div style={{
+                  fontSize: '12px',
+                  color: '#94a3b8',
+                  marginBottom: '8px'
+                }}>
+                  📍 {route.dist} · ⏱ {route.time}
+                </div>
+                {route.label === 'UNSAFE' ? (
+                  <div style={{
+                    padding: '6px 8px',
+                    background: 'rgba(239,68,68,0.15)',
+                    border: '1px solid #ef4444',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    color: '#ef4444'
+                  }}>
+                    ⚠️ AI Alert: Unsafe Route
+                  </div>
+                ) : (
+                  <div style={{
+                    padding: '6px 8px',
+                    background: 'rgba(16,185,129,0.15)',
+                    border: '1px solid #10b981',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    color: '#10b981'
+                  }}>
+                    ✅ AI Recommended Route
+                  </div>
+                )}
+              </div>
+            </Popup>
+          </Polyline>
         )
       })}
       
