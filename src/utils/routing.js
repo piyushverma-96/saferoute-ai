@@ -7,6 +7,10 @@ import { getUnsafeZoneData, getSafetyLevel, calcSafetyScore } from './safetyScor
 export const fetchRoutes = async (
   start, end, travelHour, destination = ''
 ) => {
+  console.log('=== FETCH ROUTES ===')
+  console.log('destination:', destination)
+  console.log('unsafe zone:', getUnsafeZoneData(destination))
+  
   try {
     const startLon = start.lon || start.lng;
     const endLon = end.lon || end.lng;

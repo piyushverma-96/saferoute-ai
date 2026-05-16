@@ -171,10 +171,10 @@ const MapView = ({
             key={route.id}
             positions={route.coordinates || []}
             pathOptions={{
-              color: route.color,
+              color: route.score < 40 ? '#ef4444' : (route.score < 65 ? '#f59e0b' : '#10b981'),
               weight: isSelected ? 8 : 5,
               opacity: isSelected ? 1 : 0.6,
-              dashArray: isUnsafe ? '10, 10' : (isSelected ? null : '12, 8'),
+              dashArray: isUnsafe ? '10, 8' : (isSelected ? null : '12, 8'),
               smoothFactor: 5,
               lineCap: 'round',
               lineJoin: 'round'
@@ -188,11 +188,11 @@ const MapView = ({
                 padding: '12px',
                 borderRadius: '10px',
                 minWidth: '190px',
-                border: `1px solid ${route.color}`,
+                border: `1px solid ${route.score < 40 ? '#ef4444' : (route.score < 65 ? '#f59e0b' : '#10b981')}`,
                 fontFamily: 'sans-serif'
               }}>
                 <div style={{
-                  color: route.color,
+                  color: route.score < 40 ? '#ef4444' : (route.score < 65 ? '#f59e0b' : '#10b981'),
                   fontWeight: '700',
                   fontSize: '15px',
                   marginBottom: '8px'
@@ -202,7 +202,7 @@ const MapView = ({
                 <div style={{
                   font_size: '22px',
                   fontWeight: '700',
-                  color: route.color,
+                  color: route.score < 40 ? '#ef4444' : (route.score < 65 ? '#f59e0b' : '#10b981'),
                   marginBottom: '4px'
                 }}>
                   {route.score}<span style={{

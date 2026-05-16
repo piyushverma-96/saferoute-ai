@@ -102,33 +102,55 @@ export function calcSafety(routeIdx, travelHour) {
 // Unsafe zones - hardcoded for demo
 export const UNSAFE_ZONES = {
   'vijay nagar': {
-    level: 'all_unsafe',
-    scores: [38, 29, 19], // all 3 unsafe
-    reason: 'High crime rate, poor lighting, no CCTV coverage'
+    scores: [38, 29, 19],
+    reason: 'High crime incidents, poor street lighting, minimal CCTV coverage reported in this area'
+  },
+  'vijaynagar': {
+    scores: [38, 29, 19],
+    reason: 'High crime incidents, poor street lighting, minimal CCTV coverage reported in this area'
+  },
+  'vijay': {
+    scores: [38, 29, 19],
+    reason: 'High crime incidents, poor street lighting, minimal CCTV coverage reported in this area'
   },
   'rajwada': {
-    level: 'partial_unsafe', 
-    scores: [72, 35, 28], // 1 safe, 2 unsafe
-    reason: 'Crowded area, 2 routes through dark lanes'
+    scores: [71, 35, 28],
+    reason: 'Crowded market area, 2 routes pass through poorly lit narrow lanes at night'
   },
   'palasia': {
-    level: 'partial_unsafe',
-    scores: [68, 41, 33],
-    reason: 'Mixed safety - some areas risky'
+    scores: [69, 42, 31],
+    reason: 'Mixed safety zone, some routes pass through low surveillance areas'
+  },
+  'chhatripura': {
+    scores: [41, 33, 24],
+    reason: 'Low police presence, poor lighting reported'
   }
 }
 
-// Check if destination is in unsafe zone
+// FIXED detection function
 export const getUnsafeZoneData = (destination) => {
   if (!destination) return null
-  
-  const dest = destination.toLowerCase()
-  
+
+  // Clean and lowercase
+  const dest = destination
+    .toLowerCase()
+    .trim()
+    .replace(/[,\.]/g, ' ')
+    .replace(/\s+/g, ' ')
+
+  console.log('Checking unsafe zone for:', dest)
+  console.log('dest cleaned:', dest)
+  console.log('checking against zones:', Object.keys(UNSAFE_ZONES))
+
+  // Check each unsafe zone keyword
   for (const zone in UNSAFE_ZONES) {
     if (dest.includes(zone)) {
+      console.log('UNSAFE ZONE DETECTED:', zone)
       return UNSAFE_ZONES[zone]
     }
   }
+
+  console.log('No unsafe zone detected')
   return null
 }
 

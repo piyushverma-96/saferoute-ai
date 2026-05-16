@@ -2,19 +2,46 @@ import React from 'react';
 import { getSafetyLevel } from '../utils/safetyScore';
 
 const RouteCard = ({ route, selected, onClick }) => {
+  // Override color based on score
+  const getRouteStyle = (score) => {
+    if (score < 40) return {
+      color: '#ef4444',
+      bg: 'rgba(239,68,68,0.08)',
+      border: '#ef4444',
+      label: 'UNSAFE',
+      icon: '🔴'
+    }
+    if (score < 65) return {
+      color: '#f59e0b',
+      bg: 'rgba(245,158,11,0.08)',
+      border: '#f59e0b',
+      label: 'MODERATE',
+      icon: '🟡'
+    }
+    return {
+      color: '#10b981',
+      bg: 'rgba(16,185,129,0.08)',
+      border: '#10b981',
+      label: 'SAFE',
+      icon: '🟢'
+    }
+  }
+
+  const style = getRouteStyle(route.score)
+
   return (
     <div 
       onClick={() => onClick && onClick()}
       style={{
-        background: route.bg,
-        border: selected ? `2px solid ${route.color}` : `1.5px solid ${route.border}`,
+        background: style.bg,
+        border: selected ? `2px solid ${style.border}` : `1.5px solid ${style.border}`,
         borderRadius: '14px',
         padding: '14px',
         cursor: 'pointer',
         marginBottom: '10px',
         transition: 'all 0.2s',
         transform: selected ? 'scale(1.02)' : 'scale(1)',
-        boxShadow: selected ? `0 10px 20px ${route.color}22` : 'none',
+        boxShadow: selected ? `0 10px 20px ${style.color}22` : 'none',
         zIndex: selected ? 2 : 1,
         position: 'relative'
       }}
@@ -29,7 +56,7 @@ const RouteCard = ({ route, selected, onClick }) => {
         <div style={{
           fontSize: '28px',
           fontWeight: '700',
-          color: route.color
+          color: style.color
         }}>
           {route.score}
           <span style={{
@@ -51,11 +78,11 @@ const RouteCard = ({ route, selected, onClick }) => {
             fontWeight: '700',
             padding: '3px 10px',
             borderRadius: '8px',
-            background: route.color + '33',
-            color: route.color,
+            background: style.color + '33',
+            color: style.color,
             letterSpacing: '0.05em'
           }}>
-            {route.icon} {route.label}
+            {style.icon} {style.label}
           </span>
           <span style={{
             fontSize: '10px',
@@ -77,7 +104,7 @@ const RouteCard = ({ route, selected, onClick }) => {
         <div style={{
           width: `${route.score}%`,
           height: '100%',
-          background: route.color,
+          background: style.color,
           borderRadius: '3px',
           transition: 'width 0.8s ease'
         }}/>
