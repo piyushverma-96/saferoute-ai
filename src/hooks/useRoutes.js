@@ -131,9 +131,9 @@ export function useRoutes() {
       setRoutes(finalRoutes);
     } catch (err) {
       if (err.message === 'GEOCODING_ERROR') {
-        setError("❌ Location not found. Try: 'Rajwada, Indore'");
+        setError("❌ Location not found. Try adding city name e.g. 'Rajwada, Indore'");
       } else {
-        setError("❌ An unexpected error occurred.");
+        setError("❌ An unexpected error occurred. Please check your internet.");
       }
     } finally {
       setIsLoading(false);

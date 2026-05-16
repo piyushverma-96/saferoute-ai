@@ -37,51 +37,79 @@ export default function Sidebar({
   const [isStartSelected, setIsStartSelected] = useState(false);
   const [isEndSelected, setIsEndSelected] = useState(false);
 
-  const popularIndoreLocations = [
-    "Rajwada, Indore",
-    "Vijay Nagar, Indore", 
-    "Palasia, Indore",
-    "Sapna Sangeeta, Indore",
-    "MG Road, Indore",
-    "Bhawarkuan, Indore",
-    "Geeta Bhawan, Indore",
-    "LIG Colony, Indore",
-    "Scheme 54, Indore",
-    "Chameli Devi, Indore"
+  const INDORE_LOCATIONS = [
+    'Vijay Nagar, Indore',
+    'Rajwada, Indore',
+    'Palasia, Indore',
+    'Sapna Sangeeta Road, Indore',
+    'MG Road, Indore',
+    'Bhawarkuan, Indore',
+    'Rau, Indore',
+    'Pithampur, Indore',
+    'Mhow, Indore',
+    'AB Road, Indore',
+    'Bhanwarkuan, Indore',
+    'Scheme 54, Indore',
+    'LIG Colony, Indore',
+    'Bombay Hospital, Indore',
+    'Airport Road, Indore',
+    'Super Corridor, Indore',
+    'Lasudia, Indore',
+    'Kanadiya Road, Indore',
+    'Silicon City, Indore',
+    'IIM Indore, Rau'
   ];
+
+  const getSuggestions = (query) => {
+    if (!query || query.length < 2) return [];
+    const q = query.toLowerCase();
+    return INDORE_LOCATIONS.filter(loc =>
+      loc.toLowerCase().includes(q)
+    ).slice(0, 5);
+  };
 
   useEffect(() => {
     let timeoutId;
-    if (endQuery.length >= 3 && showSuggestions && !popularIndoreLocations.includes(endQuery)) {
-      timeoutId = setTimeout(async () => {
-        try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(endQuery)}&format=json&limit=5&countrycodes=in&viewbox=75.5,22.5,76.2,23.0`);
-          const data = await res.json();
-          setDestinationSuggestions(data.map(d => d.display_name));
-        } catch(e) {
-          console.error("Autocomplete error", e);
-        }
-      }, 400);
-    } else if (endQuery.length < 3) {
-      setDestinationSuggestions(popularIndoreLocations.slice(0, 5));
+    if (endQuery.length >= 2 && showSuggestions) {
+      const local = getSuggestions(endQuery);
+      if (local.length > 0) {
+        setDestinationSuggestions(local);
+      } else if (endQuery.length >= 3 && !INDORE_LOCATIONS.includes(endQuery)) {
+        timeoutId = setTimeout(async () => {
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(endQuery)}&format=json&limit=5&countrycodes=in&viewbox=75.5,22.5,76.2,23.0`);
+            const data = await res.json();
+            setDestinationSuggestions(data.map(d => d.display_name));
+          } catch(e) {
+            console.error("Autocomplete error", e);
+          }
+        }, 400);
+      }
+    } else if (endQuery.length < 2) {
+      setDestinationSuggestions(INDORE_LOCATIONS.slice(0, 5));
     }
     return () => clearTimeout(timeoutId);
   }, [endQuery, showSuggestions]);
 
   useEffect(() => {
     let timeoutId;
-    if (startQuery.length >= 3 && showStartSuggestions && !popularIndoreLocations.includes(startQuery)) {
-      timeoutId = setTimeout(async () => {
-        try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(startQuery)}&format=json&limit=5&countrycodes=in&viewbox=75.5,22.5,76.2,23.0`);
-          const data = await res.json();
-          setStartSuggestions(data.map(d => d.display_name));
-        } catch(e) {
-          console.error("Autocomplete error", e);
-        }
-      }, 400);
-    } else if (startQuery.length < 3) {
-      setStartSuggestions(popularIndoreLocations.slice(0, 5));
+    if (startQuery.length >= 2 && showStartSuggestions) {
+      const local = getSuggestions(startQuery);
+      if (local.length > 0) {
+        setStartSuggestions(local);
+      } else if (startQuery.length >= 3 && !INDORE_LOCATIONS.includes(startQuery)) {
+        timeoutId = setTimeout(async () => {
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(startQuery)}&format=json&limit=5&countrycodes=in&viewbox=75.5,22.5,76.2,23.0`);
+            const data = await res.json();
+            setStartSuggestions(data.map(d => d.display_name));
+          } catch(e) {
+            console.error("Autocomplete error", e);
+          }
+        }, 400);
+      }
+    } else if (startQuery.length < 2) {
+      setStartSuggestions(INDORE_LOCATIONS.slice(0, 5));
     }
     return () => clearTimeout(timeoutId);
   }, [startQuery, showStartSuggestions]);
@@ -209,7 +237,19 @@ export default function Sidebar({
               <Navigation size={16} />
             </button>
             {showStartSuggestions && startSuggestions.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-[#1A1A2E] border border-brand-purple rounded-lg shadow-xl z-50 overflow-hidden">
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                background: '#1a2332',
+                border: '1px solid #2d3748',
+                borderRadius: '8px',
+                zIndex: 1000,
+                overflow: 'hidden',
+                marginTop: '4px',
+                boxShadow: '0 10px 25px rgba(0,0,0,0.5)'
+              }}>
                 {startSuggestions.map((s, i) => (
                   <div 
                     key={i} 
@@ -217,13 +257,21 @@ export default function Sidebar({
                       e.preventDefault();
                       selectSuggestion(s, 'start');
                     }}
-                    onTouchEnd={(e) => {
-                      e.preventDefault();
-                      selectSuggestion(s, 'start');
+                    style={{
+                      padding: '10px 12px',
+                      color: '#e2e8f0',
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      borderBottom: '1px solid #2d3748',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'background 0.2s'
                     }}
-                    className="px-4 py-2 text-sm text-brand-text-primary hover:bg-brand-purple hover:text-white cursor-pointer border-b border-brand-border/50 last:border-0"
+                    onMouseEnter={e => e.currentTarget.style.background = '#243040'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                   >
-                    {s}
+                    📍 {s}
                   </div>
                 ))}
               </div>
@@ -263,7 +311,19 @@ export default function Sidebar({
               </div>
             )}
             {showSuggestions && destinationSuggestions.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-[#1A1A2E] border border-brand-purple rounded-lg shadow-xl z-50 overflow-hidden">
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                background: '#1a2332',
+                border: '1px solid #2d3748',
+                borderRadius: '8px',
+                zIndex: 1000,
+                overflow: 'hidden',
+                marginTop: '4px',
+                boxShadow: '0 10px 25px rgba(0,0,0,0.5)'
+              }}>
                 {destinationSuggestions.map((s, i) => (
                   <div 
                     key={i} 
@@ -271,13 +331,21 @@ export default function Sidebar({
                       e.preventDefault();
                       selectSuggestion(s, 'destination');
                     }}
-                    onTouchEnd={(e) => {
-                      e.preventDefault();
-                      selectSuggestion(s, 'destination');
+                    style={{
+                      padding: '10px 12px',
+                      color: '#e2e8f0',
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      borderBottom: '1px solid #2d3748',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'background 0.2s'
                     }}
-                    className="px-4 py-2 text-sm text-brand-text-primary hover:bg-brand-purple hover:text-white cursor-pointer border-b border-brand-border/50 last:border-0"
+                    onMouseEnter={e => e.currentTarget.style.background = '#243040'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                   >
-                    {s}
+                    📍 {s}
                   </div>
                 ))}
               </div>
