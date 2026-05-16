@@ -6,6 +6,29 @@ import SkeletonCard from './SkeletonCard';
 import { useVoiceNavigation } from '../hooks/useVoiceNavigation';
 import { mockContacts, safeStops } from '../data/mockData';
 
+const popularIndoreLocations = [
+  'Vijay Nagar, Indore',
+  'Rajwada, Indore',
+  'Palasia, Indore',
+  'Sapna Sangeeta Road, Indore',
+  'MG Road, Indore',
+  'Bhawarkuan, Indore',
+  'Rau, Indore',
+  'Pithampur, Indore',
+  'Mhow, Indore',
+  'AB Road, Indore',
+  'Bhanwarkuan, Indore',
+  'Scheme 54, Indore',
+  'LIG Colony, Indore',
+  'Bombay Hospital, Indore',
+  'Airport Road, Indore',
+  'Super Corridor, Indore',
+  'Lasudia, Indore',
+  'Kanadiya Road, Indore',
+  'Silicon City, Indore',
+  'IIM Indore, Rau'
+];
+
 export default function Sidebar({ 
   startQuery, 
   setStartQuery, 
@@ -37,33 +60,10 @@ export default function Sidebar({
   const [isStartSelected, setIsStartSelected] = useState(false);
   const [isEndSelected, setIsEndSelected] = useState(false);
 
-  const INDORE_LOCATIONS = [
-    'Vijay Nagar, Indore',
-    'Rajwada, Indore',
-    'Palasia, Indore',
-    'Sapna Sangeeta Road, Indore',
-    'MG Road, Indore',
-    'Bhawarkuan, Indore',
-    'Rau, Indore',
-    'Pithampur, Indore',
-    'Mhow, Indore',
-    'AB Road, Indore',
-    'Bhanwarkuan, Indore',
-    'Scheme 54, Indore',
-    'LIG Colony, Indore',
-    'Bombay Hospital, Indore',
-    'Airport Road, Indore',
-    'Super Corridor, Indore',
-    'Lasudia, Indore',
-    'Kanadiya Road, Indore',
-    'Silicon City, Indore',
-    'IIM Indore, Rau'
-  ];
-
   const getSuggestions = (query) => {
     if (!query || query.length < 2) return [];
     const q = query.toLowerCase();
-    return INDORE_LOCATIONS.filter(loc =>
+    return popularIndoreLocations.filter(loc =>
       loc.toLowerCase().includes(q)
     ).slice(0, 5);
   };
@@ -74,7 +74,7 @@ export default function Sidebar({
       const local = getSuggestions(endQuery);
       if (local.length > 0) {
         setDestinationSuggestions(local);
-      } else if (endQuery.length >= 3 && !INDORE_LOCATIONS.includes(endQuery)) {
+      } else if (endQuery.length >= 3 && !popularIndoreLocations.includes(endQuery)) {
         timeoutId = setTimeout(async () => {
           try {
             const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(endQuery)}&format=json&limit=5&countrycodes=in&viewbox=75.5,22.5,76.2,23.0`);
@@ -86,7 +86,7 @@ export default function Sidebar({
         }, 400);
       }
     } else if (endQuery.length < 2) {
-      setDestinationSuggestions(INDORE_LOCATIONS.slice(0, 5));
+      setDestinationSuggestions(popularIndoreLocations.slice(0, 5));
     }
     return () => clearTimeout(timeoutId);
   }, [endQuery, showSuggestions]);
@@ -97,7 +97,7 @@ export default function Sidebar({
       const local = getSuggestions(startQuery);
       if (local.length > 0) {
         setStartSuggestions(local);
-      } else if (startQuery.length >= 3 && !INDORE_LOCATIONS.includes(startQuery)) {
+      } else if (startQuery.length >= 3 && !popularIndoreLocations.includes(startQuery)) {
         timeoutId = setTimeout(async () => {
           try {
             const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(startQuery)}&format=json&limit=5&countrycodes=in&viewbox=75.5,22.5,76.2,23.0`);
@@ -109,7 +109,7 @@ export default function Sidebar({
         }, 400);
       }
     } else if (startQuery.length < 2) {
-      setStartSuggestions(INDORE_LOCATIONS.slice(0, 5));
+      setStartSuggestions(popularIndoreLocations.slice(0, 5));
     }
     return () => clearTimeout(timeoutId);
   }, [startQuery, showStartSuggestions]);
