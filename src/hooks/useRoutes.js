@@ -131,7 +131,10 @@ export function useRoutes() {
       setRoutes(finalRoutes);
     } catch (err) {
       if (err.message === 'GEOCODING_ERROR') {
-        setError("❌ Location not found. Try adding city name e.g. 'Rajwada, Indore'");
+        setError(
+          '❌ "' + endQuery + '" not found. ' +
+          'Try: "Vijay Nagar" or "Rajwada" or "MG Road"'
+        );
       } else {
         setError("❌ An unexpected error occurred. Please check your internet.");
       }
